@@ -1,0 +1,33 @@
+#container {
+  display: flex;
+  flex-direction: row;
+  height: 90vh;
+  max-height: 600px;
+  min-height: 200px;
+}
+
+#chess-aa {
+  height: 100%;
+  aspect-ratio: 1/1;
+}
+
+#chess-aa-enginebar {
+  width: 40px;
+  min-width: 40px;
+  height: 100%;
+  font-size: 16px;
+}
+
+#chess-aa-variationbox {
+  width: 400px;
+  height: 50%;
+  font-size: 14px;
+  font-family: sans-serif;
+}
+
+#chess-aa-enginevariation {
+  width: 400px;
+  height: 50%;
+  font-size: 14px;
+  font-family: sans-serif;
+}

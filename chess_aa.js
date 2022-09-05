@@ -56,15 +56,6 @@ export class chess_aa {
     // logic library
     this.chess = new Chess();
 
-    // engine
-    this.engine = new Worker("stockfish.js");
-    this.engineMultipv = 3;
-    this.uciCmd("setoption name MultiPV value " + this.engineMultipv);
-    this.uciCmd("setoption name Use NNUE value true");
-    this.engineOn = false;
-    this.engine.onmessage = this.engineOnMessage();
-    this.uciCmd("uci");
-
     // Additional logic components
     this.startFen = this.DEFAULTFEN
     this.variations = new moveTree();
@@ -154,11 +145,6 @@ export class chess_aa {
 
     // Settings
     this.showAvailableMoves = true;
-
-    // pause the engine when the window is not focused
-    this.engineOnDuringPause = false;
-    window.addEventListener("blur", this.pauseEngine());
-    window.addEventListener("focus", this.unpauseEngine());
   }
 
   rankIndex(i) { return 7 - Math.floor(i/8); }
@@ -234,12 +220,11 @@ export class chess_aa {
     }
 
     this.variations.clear();
-    if (!quiet){ // skip the following block when loading a pgn
+    if (!quiet) { // skip the following block when loading a pgn
       this.header = {};
-      let event = new CustomEvent("chess-aa-newposition", { detail: {variations: this.variations.copy()} });
+      let event = new CustomEvent("chess-aa-newposition", { detail: {fen: this.startFen, variations: this.variations.copy()} });
       this.dispatcher.dispatchEvent(event);
     }
-    this.engineUpdatePosition();
 
     return true;
   }
@@ -264,7 +249,7 @@ export class chess_aa {
         this.variations.undo();
       }
       
-      let event = new CustomEvent("chess-aa-newposition", { detail: {variations: this.variations.copy()} });
+      let event = new CustomEvent("chess-aa-newposition", { detail: {fen: this.startFen, variations: this.variations.copy()} });
       this.dispatcher.dispatchEvent(event);
     }
   }
@@ -365,9 +350,8 @@ export class chess_aa {
     }
 
     this.variations.add(move);
-    let event = new CustomEvent("chess-aa-movemade", { detail: { move:move, address:this.variations.address() } });
+    let event = new CustomEvent("chess-aa-movemade", { detail: { move:move, address:this.variations.address(), fen: this.chess.fen() } });
     this.dispatcher.dispatchEvent(event);
-    this.engineUpdatePosition();
     this.clearAnnotations();
 
     // display move
@@ -403,9 +387,8 @@ export class chess_aa {
     let move = this.chess.undo()
     if (move) {
       this.variations.undo();
-      let event = new CustomEvent("chess-aa-moveunmade", { detail: { move:move, address:this.variations.address() } });
+      let event = new CustomEvent("chess-aa-moveunmade", { detail: { move:move, address:this.variations.address(), fen: this.chess.fen() } });
       this.dispatcher.dispatchEvent(event);
-      this.engineUpdatePosition();
       this.clearAnnotations();
 
       let source = this.squareNamesMap[move.from];
@@ -962,126 +945,9 @@ export class chess_aa {
         that.makeMove(move,true);
       }
     };
-
   }
 
   focus() {
     this.container.focus();
-  }
-
-  // Engine stuff
-  uciCmd(cmd) {
-    // console.log("UCI: " + cmd);
-    this.engine.postMessage(cmd);
-  }
-
-  engineUpdatePosition() {
-    this.uciCmd("stop");
-    let command = "position fen " + this.startFen + " moves ";
-    let history = this.variations.activeMoves();
-    for (let i=0; i<history.length; i++) {
-      let move = history[i];
-      command += move.from + move.to + (this.isPromotion(move.flags) ? move.promotion : "") + " ";
-    }
-    this.uciCmd(command);
-    if (this.engineOn) {
-      this.uciCmd("go");
-    }
-  }
-
-  engineOnMessage() {
-    let that = this;
-    return function(event) {
-      let line = event.data;
-      if (line.substring(0,4) == "info") {
-        let match = line.match(/^info .*\bdepth ([0-9]+) .*\bmultipv (.+) .*\bscore (\w+) (-?\d+) .*\bpv (.+)/);
-        if (match) {
-          let engineCurrentDepth = parseInt(match[1]);
-          let multipv = parseInt(match[2]) - 1;
-          let engineCurrentScoretype = match[3];
-          let engineCurrentScore = parseInt(match[4]);
-          let engineCurrentVariation = match[5];
-          let sanvariation = [];
-          let moves = engineCurrentVariation.split(" ");
-          let movesmade = 0;
-          for (let i=0; i<moves.length; ++i) {
-            let move = that.chess.move({ from: moves[i].slice(0,2), to: moves[i].slice(2,4), promotion: moves[i].length == 5 ? moves[i].slice(4) : "" });
-            if (!move) {
-              break;
-            }
-            ++movesmade;
-            sanvariation.push(move);
-          }
-          if (movesmade == 0) {
-            return;
-          }
-          for (let i=0; i<movesmade; ++i) {
-            that.chess.undo();
-          }
-          let event = new CustomEvent("chess-aa-engineEvaluation", 
-                              {detail: {turn: that.chess.turn(),
-                                        score: engineCurrentScore,
-                                        scoreType: engineCurrentScoretype,
-                                        depth: engineCurrentDepth,
-                                        variation: sanvariation,
-                                        multipv: multipv,
-                                        fen: that.chess.fen()
-                                       }
-                              }
-                      );
-          that.dispatcher.dispatchEvent(event);
-
-          // console.log("Reply: " + line)
-        }
-      }
-      else if(line == "bestmove (none)") { // mate on the board
-        let engineCurrentDepth = 1000;
-        let engineCurrentScoretype = "mate";
-        let engineCurrentScore = 0;
-        let engineCurrentVariation = [];
-        let event = new CustomEvent("chess-aa-engineEvaluation", 
-                            {detail: {turn: that.chess.turn(),
-                                      score: engineCurrentScore,
-                                      scoreType: engineCurrentScoretype,
-                                      depth: engineCurrentDepth,
-                                      variation: engineCurrentVariation,
-                                      multipv: 0,
-                                      fen: that.chess.fen()
-                                     }
-                            }
-                    );
-        that.dispatcher.dispatchEvent(event);
-      }
-    };
-  }
-
-  engineSwitch(on) {
-    if (on) {
-      this.engineOn = true;
-      this.engineUpdatePosition();
-      let event = new CustomEvent("chess-aa-engineSwitchOnOff",{detail:{on:true}});
-      this.dispatcher.dispatchEvent(event);
-    }
-    else {
-      this.uciCmd("stop");
-      this.engineOn = false;
-      let event = new CustomEvent("chess-aa-engineSwitchOnOff",{detail:{on:false}});
-      this.dispatcher.dispatchEvent(event);
-    }
-  }
-
-  pauseEngine() {
-    let that = this;
-    return function() {
-    that.engineOnDuringPause = that.engineOn;
-    that.engineSwitch(false);
-    };
-  }
-
-  unpauseEngine() {
-    let that = this;
-    return function() {
-      that.engineSwitch(that.engineOnDuringPause);
-    };
   }
 }

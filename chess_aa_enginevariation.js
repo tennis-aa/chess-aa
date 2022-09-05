@@ -1,14 +1,14 @@
+import {BLACK, WHITE} from "./chess.js"
+
 export class enginevariation {
-  constructor(main_div, chess_aa) {
+  constructor(main_div, chess_aa, chess_aa_engine) {
     this.div = document.createElement("div");
     this.div.appendChild(document.createTextNode("Depth: "));
     this.depthSpan = document.createElement("span");
     this.depthSpan.textContent = 0;
     this.div.appendChild(this.depthSpan);
-    this.variations = [];
     this.variationdivs = [];
-    for (let i=0; i<chess_aa.engineMultipv; ++i) {
-      this.variations.push([]);
+    for (let i=0; i<chess_aa_engine.engineMultipv; ++i) {
       this.variationdivs.push(document.createElement("div"));
       this.variationdivs[i].textContent = "Variation " + (i+1);
       this.variationdivs[i].style.whiteSpace = "nowrap";
@@ -19,8 +19,9 @@ export class enginevariation {
     main_div.appendChild(this.div);
 
     this.chess_aa = chess_aa;
-    chess_aa.dispatcher.addEventListener("chess-aa-engineEvaluation", this.update());
-    // chess_aa.dispatcher.addEventListener("chess-aa-engineSwitchOnOff", () => false);
+    this.chess_aa_engine = chess_aa_engine;
+    chess_aa_engine.dispatcher.addEventListener("chess-aa-engineEvaluation", this.update());
+    // chess_aa_engine.dispatcher.addEventListener("chess-aa-engineSwitchOnOff", () => false);
     chess_aa.dispatcher.addEventListener("chess-aa-movemade", this.clear());
     chess_aa.dispatcher.addEventListener("chess-aa-moveunmade", this.clear());
     chess_aa.dispatcher.addEventListener("chess-aa-newposition", this.clear());
@@ -30,11 +31,19 @@ export class enginevariation {
     let that = this;
     return function(event) {
       that.depthSpan.textContent = event.detail.depth;
-      let variation = that.variations[event.detail.multipv];
-      variation.length = 0;
+      let variation = [];
       let variationdiv = that.variationdivs[event.detail.multipv];
       variationdiv.replaceChildren();
-      let text = "";
+      let score = event.detail.score * (event.detail.turn == WHITE ? 1 : -1);
+      let scorespan = document.createElement("span");
+      scorespan.style.fontWeight = "bold";
+      if (event.detail.scoreType == "cp") {
+        scorespan.textContent = "" + (score/100) + ": ";
+      }
+      else if (event.detail.scoreType == "mate") {
+        scorespan.textContent = "M" + score + ": ";
+      }
+      variationdiv.appendChild(scorespan);
       for (let i=0; i<event.detail.variation.length; ++i) {
         let span = document.createElement("span");
         span.style.cursor = "pointer";

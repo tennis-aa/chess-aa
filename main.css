@@ -1,7 +1,7 @@
 #container {
   display: flex;
   flex-direction: row;
-  height: 90vh;
+  height: 80vh;
   max-height: 600px;
   min-height: 200px;
 }
@@ -23,6 +23,7 @@
   height: 50%;
   font-size: 14px;
   font-family: sans-serif;
+  overflow: auto;
 }
 
 #chess-aa-enginevariation {
@@ -30,4 +31,8 @@
   height: 50%;
   font-size: 14px;
   font-family: sans-serif;
+}
+
+#chess-aa-openingexplorer {
+  overflow: auto;
 }

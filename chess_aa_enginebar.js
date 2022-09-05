@@ -1,8 +1,8 @@
 import {BLACK, WHITE} from "./chess.js"
 
 export class enginebar {
-  constructor(main_div, chess_aa) {
-    this.chess_aa = chess_aa;
+  constructor(main_div, chess_aa_engine) {
+    this.chess_aa_engine = chess_aa_engine;
 
     this.div = document.createElement("div");
     this.div.style.position = "relative";
@@ -39,8 +39,8 @@ export class enginebar {
 
     this.on = false;
 
-    this.chess_aa.dispatcher.addEventListener("chess-aa-engineEvaluation", this.update());
-    this.chess_aa.dispatcher.addEventListener("chess-aa-engineSwitchOnOff", this.switchOnOff());
+    this.chess_aa_engine.dispatcher.addEventListener("chess-aa-engineEvaluation", this.update());
+    this.chess_aa_engine.dispatcher.addEventListener("chess-aa-engineSwitchOnOff", this.switchOnOff());
   }
 
   update() {

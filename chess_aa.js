@@ -2,7 +2,7 @@ import { Chess, BLACK, WHITE, PAWN, BISHOP, KNIGHT, ROOK, QUEEN, KING } from "./
 import { moveTree } from "./moveTree.js";
 
 export class chess_aa {
-  constructor(main_div){
+  constructor(main_div,mode="analysis") {
 
     // Constants
     this.whitePawnSVG = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PHBhdGggZD0iTTIyLjUgOWMtMi4yMSAwLTQgMS43OS00IDQgMCAuODkuMjkgMS43MS43OCAyLjM4QzE3LjMzIDE2LjUgMTYgMTguNTkgMTYgMjFjMCAyLjAzLjk0IDMuODQgMi40MSA1LjAzLTMgMS4wNi03LjQxIDUuNTUtNy40MSAxMy40N2gyM2MwLTcuOTItNC40MS0xMi40MS03LjQxLTEzLjQ3IDEuNDctMS4xOSAyLjQxLTMgMi40MS01LjAzIDAtMi40MS0xLjMzLTQuNS0zLjI4LTUuNjIuNDktLjY3Ljc4LTEuNDkuNzgtMi4zOCAwLTIuMjEtMS43OS00LTQtNHoiIGZpbGw9IiNmZmYiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg==";
@@ -145,6 +145,18 @@ export class chess_aa {
 
     // Settings
     this.showAvailableMoves = true;
+
+    if (mode == "play") {
+      this.mode = "play";
+      this.player = WHITE;
+      this.moveRequested = false;
+    }
+    else if (mode == "analysis") {
+      this.mode = "analysis";
+    }
+    else {
+      throw("mode " + mode + " undefined.");
+    }
   }
 
   rankIndex(i) { return 7 - Math.floor(i/8); }
@@ -226,6 +238,10 @@ export class chess_aa {
       this.dispatcher.dispatchEvent(event);
     }
 
+    if (this.mode == "play" && this.player != this.chess.turn()) {
+      this.requestMove();
+    }
+
     return true;
   }
 
@@ -245,10 +261,15 @@ export class chess_aa {
       for (let i=0; i<moves.length; i++) {
         this.variations.add(moves[i]);
       }
+      let endAddress = this.variations.address();
       for (let i=0; i<moves.length; i++) {
         this.variations.undo();
       }
-      
+
+      if (this.mode == "play") {
+        this.gotoAddress(endAddress);
+      }
+
       let event = new CustomEvent("chess-aa-newposition", { detail: {fen: this.startFen, variations: this.variations.copy()} });
       this.dispatcher.dispatchEvent(event);
     }
@@ -380,7 +401,25 @@ export class chess_aa {
       }
     }
 
+    // Ask engine for a move
+    if (this.mode == "play" && this.player != this.chess.turn()) {
+      this.requestMove();
+    }
+
     return true;
+  }
+
+  requestMove() {
+    let event = new CustomEvent("chess-aa-enginemoverequest", { detail: { fen: this.chess.fen() } });
+    this.dispatcher.dispatchEvent(event);
+    this.moveRequested = true;
+  }
+
+  suggestMove(move) {
+    if (this.mode == "play" && this.moveRequested) {
+      if (this.makeMove(move,true))
+        this.moveRequested = false;
+    }
   }
 
   unmakeMove(animate=false) {
@@ -597,7 +636,7 @@ export class chess_aa {
     return function(event) {
       if (event.button == 0) {
         that.clearAnnotations();
-        if (that.chess.game_over()) {
+        if (that.chess.game_over() || (that.mode == "play" && that.player != that.chess.turn())) {
           return;
         }
         img.parentElement.style.backgroundColor = that.selectedPieceColor;;
@@ -623,7 +662,7 @@ export class chess_aa {
         }
 
         moveAt(event.clientX, event.clientY);
-    
+
         function onMouseMove(event) {
           moveAt(event.clientX, event.clientY);
         }
@@ -691,7 +730,7 @@ export class chess_aa {
       if (!isInDiv) {
         img.style.top = "0";
         img.style.left = "0";
-        img.style.zIndex = "0";
+        img.style.zIndex = "1";
         img.style.width = "100%";
         that.clearAnnotations();
         div.remove();
@@ -708,7 +747,7 @@ export class chess_aa {
         that.makeMove(move2);
         img.style.top = "0";
         img.style.left = "0";
-        img.style.zIndex = "0";
+        img.style.zIndex = "1";
         img.style.width = "100%";
         that.clearAnnotations();
         div.remove();
@@ -742,6 +781,7 @@ export class chess_aa {
         let square = event.currentTarget;
         let source = Array.from(that.chessboard.children).indexOf(square);
 
+        // transparent div to help with dragging functionality
         let img = document.createElement("div");
         // img.src = that.pen;
         square.appendChild(img);
@@ -760,7 +800,7 @@ export class chess_aa {
         }
 
         moveAt(event.clientX, event.clientY);
-    
+
         function onMouseMove(event) {
           moveAt(event.clientX, event.clientY);
         }
@@ -770,11 +810,9 @@ export class chess_aa {
 
         img.onmouseup = function(event) {
           document.removeEventListener('mousemove', onMouseMove);
-          img.onmouseup = null;
+          img.remove();
 
-          img.hidden = true;
           let elemBelow = document.elementFromPoint(event.clientX, event.clientY);
-          img.hidden = false;
           let target;
           if (elemBelow.parentElement === that.chessboard){
             target = Array.from(that.chessboard.children).indexOf(elemBelow);
@@ -801,7 +839,6 @@ export class chess_aa {
           else if (target && target >=0 && target < 64) {
             that.arrowSVG(source,target);
           }
-          img.remove();
         }
       }
     };
@@ -814,6 +851,7 @@ export class chess_aa {
     svg.style.top = "0";
     svg.style.left = "0";
     svg.style.opacity = "0.6";
+    svg.style.zIndex = "2";
     svg.style.pointerEvents = "none";
     svg.setAttribute("height", "100%");
     svg.setAttribute("apect-ratio", "1/1");
@@ -895,6 +933,16 @@ export class chess_aa {
   }
 
   flipBoard() {
+    if (this.mode == "play") {
+      if (this.chess.history().length != 0) {
+        // Only allow flipping the board when the game has not started
+        return;
+      }
+      this.player = this.whiteDown ? BLACK : WHITE;
+      if (this.player == BLACK) {
+        this.requestMove();
+      }
+    }
     this.whiteDown = !this.whiteDown;
 
     for (let i = 0; i < 64; i++) {
@@ -937,12 +985,26 @@ export class chess_aa {
   keyboardCommands() {
     let that = this;
     return function (event) {
-      if (event.code == "ArrowLeft") {
-        that.unmakeMove(true);
+      if (that.mode == "play") {
+        if (event.code == "ArrowLeft") {
+          let address = that.variations.address();
+          if (that.player == that.chess.turn() && address.length > 1) {
+            that.removeVariationAtAddress(address.slice(0,address.length - 1));
+          }
+          else if (address.length > 0) {
+            that.removeVariationAtAddress(address);
+            that.moveRequested = false;
+          }
+        }
       }
-      else if (event.code == "ArrowRight") {
-        let move = that.variations.redo();
-        that.makeMove(move,true);
+      else {
+        if (event.code == "ArrowLeft") {
+          that.unmakeMove(true);
+        }
+        else if (event.code == "ArrowRight") {
+          let move = that.variations.redo();
+          that.makeMove(move,true);
+        }
       }
     };
   }

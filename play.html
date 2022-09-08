@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>chess-aa</title>
+    <link rel="stylesheet" href="main.css">
+  </head>
+  <body>
+    <div>
+      chess-aa
+    </div>
+    <div id="container">
+      <div id="chess-aa"></div>
+      <div id="variationUtilities">
+        <div id="chess-aa-variationbox"></div>
+      </div>
+    </div>
+    <div id="test">
+      <button onclick="restart()">Restart</button>
+      <button onclick="flipBoard()">Flip board</button>
+      <button onclick="printVariations()">Variations</button>
+      <button onclick="printPGNMain()">PGN</button>
+      <button onclick="printFEN()">FEN</button>
+      <label for="level">Level</label>
+      <input type="number" id="level" value="20" onchange="changeLevel()">
+      <textarea id="pgn" placeholder="Type pgn"></textarea>
+      <button onclick="load_pgn()">Load PGN</button>
+      <textarea id="fen" placeholder="Type fen"></textarea>
+      <button onclick="load_fen()">Load fen</button>
+      <div id="testbox"></div>
+    </div>
+    <script src="play.js" type="module"></script>
+  </body>
+</html>

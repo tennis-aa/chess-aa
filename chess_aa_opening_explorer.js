@@ -62,7 +62,7 @@ export class openingexplorer {
       fetch("https://explorer.lichess.ovh/masters?fen=" + event.detail.fen
       ).then((response) => response.json()
       ).then((x) => {
-        console.log(x)
+        // console.log(x)
         if (x.opening){
           this.openingName.textContent = x.opening.name;
         }

@@ -1,8 +1,9 @@
 import {BLACK, WHITE} from "./chess.js"
 
 export class enginebar {
-  constructor(main_div, chess_aa_engine) {
+  constructor(main_div, chess_aa, chess_aa_engine) {
     this.chess_aa_engine = chess_aa_engine;
+    this.chess_aa = chess_aa;
 
     this.div = document.createElement("div");
     this.div.style.position = "relative";
@@ -12,7 +13,7 @@ export class enginebar {
 
     this.black = document.createElement("div");
     this.black.style.position = "absolute";
-    this.black.style.top = "0%"
+    this.black.style.top = "0%";
     this.black.style.height = "50%";
     this.black.style.width = "100%";
     this.black.style.backgroundColor = "black";
@@ -24,7 +25,7 @@ export class enginebar {
 
     this.white = document.createElement("div");
     this.white.style.position = "absolute";
-    this.white.style.bottom = "0"
+    this.white.style.bottom = "0%";
     this.white.style.height = "50%"
     this.white.style.width = "100%"
     this.white.style.backgroundColor = "white";
@@ -41,6 +42,7 @@ export class enginebar {
 
     this.chess_aa_engine.dispatcher.addEventListener("chess-aa-engineEvaluation", this.update());
     this.chess_aa_engine.dispatcher.addEventListener("chess-aa-engineSwitchOnOff", this.switchOnOff());
+    this.chess_aa.dispatcher.addEventListener("chess-aa-flipboard",this.flip());
   }
 
   update() {
@@ -120,4 +122,27 @@ export class enginebar {
     };
   }
 
+  flip() {
+    let that = this;
+    return function(event) {
+      if (event.detail.whiteDown) {
+        that.black.style.top = "0%";
+        that.black.style.bottom = "";
+        that.black.style.alignItems = "flex-end";
+
+        that.white.style.top = "";
+        that.white.style.bottom = "0%";
+        that.white.style.alignItems = "flex-start";
+      }
+      else {
+        that.black.style.top = "";
+        that.black.style.bottom = "0%";
+        that.black.style.alignItems = "flex-start";
+
+        that.white.style.top = "0%";
+        that.white.style.bottom = "";
+        that.white.style.alignItems = "flex-end";
+      }
+    }
+  }
 }

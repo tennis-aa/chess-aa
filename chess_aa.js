@@ -980,6 +980,9 @@ export class chess_aa {
       oldarrows[i].svg.remove();
       this.arrowSVG(63 - oldarrows[i].source, 63 - oldarrows[i].target);
     }
+
+    let event = new CustomEvent("chess-aa-flipboard",{detail:{whiteDown: this.whiteDown}});
+    this.dispatcher.dispatchEvent(event);
   }
 
   keyboardCommands() {

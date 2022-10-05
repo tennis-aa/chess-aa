@@ -143,6 +143,9 @@ export class chess_aa {
     this.container.appendChild(this.svgcontainer);
     main_div.appendChild(this.container);
 
+    //audio
+    this.piecemoveAudio = new Audio("mixkit-modern-click-box-check-1120_trim.wav");
+
     // Settings
     this.showAvailableMoves = true;
 
@@ -377,6 +380,7 @@ export class chess_aa {
 
     // display move
     this.chessboard.children[target].appendChild(imageSource);
+    this.piecemoveAudio.play();
     // animate move
     if (animate) {
       let unit = this.chessboard.children[0].offsetWidth;
@@ -483,6 +487,7 @@ export class chess_aa {
       // display move
       this.chessboard.children[source].appendChild(img);
       this.newPiece(this.chess.get(this.squareNames[target]), target);
+      this.piecemoveAudio.play();
       // animate move
       if (animate) {
         let unit = this.chessboard.children[0].offsetWidth;
@@ -998,15 +1003,18 @@ export class chess_aa {
             that.removeVariationAtAddress(address);
             that.moveRequested = false;
           }
+          return false;
         }
       }
       else {
         if (event.code == "ArrowLeft") {
           that.unmakeMove(true);
+          return false;
         }
         else if (event.code == "ArrowRight") {
           let move = that.variations.redo();
           that.makeMove(move,true);
+          return false;
         }
       }
     };

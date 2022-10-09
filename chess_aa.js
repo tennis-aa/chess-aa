@@ -1,5 +1,6 @@
 import { Chess, BLACK, WHITE, PAWN, BISHOP, KNIGHT, ROOK, QUEEN, KING } from "./chess.js";
 import { moveTree } from "./moveTree.js";
+import { loadpgn } from "./loadpgn.js";
 
 export class chess_aa {
   constructor(main_div,mode="analysis") {
@@ -158,7 +159,8 @@ export class chess_aa {
       this.mode = "analysis";
     }
     else {
-      throw("mode " + mode + " undefined.");
+      console.log("mode " + mode + " undefined. Default is analysis.");
+      this.mode = "analysis";
     }
   }
 
@@ -236,7 +238,10 @@ export class chess_aa {
 
     this.variations.clear();
     if (!quiet) { // skip the following block when loading a pgn
-      this.header = {};
+      if (this.startFen == this.DEFAULTFEN)
+        this.header = {};
+      else
+        this.header = {FEN: this.startFen, SetUp: "1"};
       let event = new CustomEvent("chess-aa-newposition", { detail: {fen: this.startFen, variations: this.variations.copy()} });
       this.dispatcher.dispatchEvent(event);
     }
@@ -253,36 +258,40 @@ export class chess_aa {
   }
 
   loadPGN(pgnstring) {
-    if (this.chess.load_pgn(pgnstring)) {
-      this.header = this.chess.header();
-      let moves = this.chess.history({verbose: true});
-      for (let i=0; i<moves.length; i++) {
-        this.chess.undo();
-      }
-      this.loadFEN(this.chess.fen(),true);
-      
-      for (let i=0; i<moves.length; i++) {
-        this.variations.add(moves[i]);
-      }
-      let endAddress = this.variations.address();
-      for (let i=0; i<moves.length; i++) {
-        this.variations.undo();
-      }
-
-      if (this.mode == "play") {
-        this.gotoAddress(endAddress);
-      }
-
-      let event = new CustomEvent("chess-aa-newposition", { detail: {fen: this.startFen, variations: this.variations.copy()} });
-      this.dispatcher.dispatchEvent(event);
+    let tree;
+    let header;
+    try {
+      [tree,header] = loadpgn(pgnstring);
     }
+    catch (err) {
+      console.log(err);
+      return;
+    }
+
+    if (header["SetUp"] == "1") {
+      this.loadFEN(header["FEN"],true);
+    }
+    else {
+      this.loadFEN(this.DEFAULTFEN,true);
+    }
+    this.header = header;
+    this.variations.children = tree.children;
+    this.variations.halfmove = tree.halfmove;
+
+    if (this.mode == "play") {
+      this.variations.prune()
+      this.gotoAddress(this.variations.addressLastMain());
+    }
+
+    let event = new CustomEvent("chess-aa-newposition", { detail: {fen: this.startFen, variations: this.variations.copy()} });
+    this.dispatcher.dispatchEvent(event);
   }
 
   printPGN(skipheader=true) {
     let output = "";
     if (!skipheader) {
       for (let [key,value] of Object.entries(this.header)) {
-        output += "[" + key + " " + value + "]\n";
+        output += '[' + key + ' "' + value + '"]\n';
       }
       output += "\n";
     }
@@ -294,7 +303,7 @@ export class chess_aa {
     let output = "";
     if (!skipheader) {
       for (let [key,value] of Object.entries(this.header)) {
-        output += "[" + key + " " + value + "]\n";
+        output += '[' + key + ' "' + value + '"]\n';
       }
       output += "\n";
     }

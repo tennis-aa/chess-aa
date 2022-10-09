@@ -61,6 +61,7 @@ export class moveTree {
     this.activeBranch = -1
     this.root = null;
     this.comment.length = 0;
+    this.halfmove = 0;
   }
 
   addAt(move,address) {
@@ -125,6 +126,17 @@ export class moveTree {
     else {
       let a = this.children[this.activeBranch].address();
       a.unshift(this.activeBranch);
+      return a;
+    }
+  }
+
+  addressLastMain() {
+    if (this.children.length == 0) {
+      return [];
+    }
+    else {
+      let a = this.children[0].addressLastMain();
+      a.unshift(0);
       return a;
     }
   }
@@ -258,6 +270,7 @@ export class moveTree {
   copy() {
     let copy = new moveTree(this.root, this.halfmove);
     copy.activeBranch = this.activeBranch;
+    copy.comment = [...this.comment];
     for (let i=0; i<this.children.length; ++i) {
       copy.children.push(this.children[i].copy());
     }
@@ -280,14 +293,22 @@ export class moveTree {
     return result;
   }
 
-  toPGN() {
+  toPGN(forceMoveNumber=true) {
     let result = "";
+    // write main line move
     if (this.children.length>0) {
       if (this.children[0].halfmove % 2 == 1) {
         result += (this.children[0].halfmove+1)/2 + ". ";
       }
+      else if (forceMoveNumber) {
+        result += this.children[0].halfmove/2 + "... ";
+      }
       result += this.children[0].root.san + " ";
+      for (let i=0; i<this.children[0].comment.length; ++i) {
+        result += "{" + this.children[0].comment[i] + "} ";
+      }
     }
+    // write variations
     for (let i=1; i < this.children.length; i++) {
       result += "(";
       if (this.children[i].halfmove % 2 == 1) {
@@ -296,33 +317,39 @@ export class moveTree {
       else {
         result += this.children[i].halfmove/2 + "... ";
       }
-      result += this.children[i].root.san + " " 
-      result += this.children[i].toPGN();
+      result += this.children[i].root.san + " ";
+      for (let j=0; j<this.children[i].comment.length; ++j) {
+        result += "{" + this.children[i].comment[j] + "} ";
+      }
+      // force the move number if there was a comment before the next move
+      result += this.children[i].toPGN(this.children[i].comment.length > 0);
       result = result.slice(0,result.length-1);
       result += ") ";
     }
+    // continue main line
     if (this.children.length>0) {
-      if (this.children.length>1 && this.children[0].children.length>0 && this.children[0].halfmove % 2 == 1) {
-        result += (this.children[0].halfmove+1)/2 + "... ";
-      }
-      result += this.children[0].toPGN();
+      // if a variation or comment are before the next move move, we have to force the move number
+      result += this.children[0].toPGN(this.children.length>1 || this.children[0].comment.length>0);
     }
     return result;
   }
 
-  toPGNMain(withcomments=false) {
+  toPGNMain(withcomments=false,forceMoveNumber=true) {
     let result = "";
     if (this.children.length>0) {
       if (this.children[0].halfmove % 2 == 1) {
         result += (this.children[0].halfmove+1)/2 + ". ";
       }
+      else if (forceMoveNumber) {
+        result += this.children[0].halfmove/2 + "... ";
+      }
       result += this.children[0].root.san + " ";
       if (withcomments){
         for (let i=0; i<this.children[0].comment.length; ++i) {
-        result += "{" + this.children[0].comment[i] + "} ";
+          result += "{" + this.children[0].comment[i] + "} ";
         }
       }
-      result += this.children[0].toPGNMain(withcomments);
+      result += this.children[0].toPGNMain(withcomments,withcomments && this.children[0].comment.length>0);
     }
     return result;
   }
@@ -458,6 +485,13 @@ export class moveTree {
     this.comment.length = 0;
     for (let i=0; i<this.children.length; ++i) {
       this.children[i].clearComments();
+    }
+  }
+
+  prune() {
+    if (this.children.length > 0) {
+      this.children = this.children.slice(0,1);
+      this.children[0].prune();
     }
   }
 

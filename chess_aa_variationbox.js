@@ -45,7 +45,13 @@ export class variationbox {
       let prev; // the object after which we will place the new move
       if (address.length == 1 && branch == 0) {// First move
         this.variationsDiv.appendChild(span);
-        span.textContent = "1. " + move.san + " ";
+        if (halfmove % 2 == 1) {
+          text += (halfmove+1)/2 + ". " + move.san + " ";
+        }
+        else {
+          text += halfmove/2 + "... " + move.san + " ";
+        }
+        span.textContent = text;
       }
       else if (branch > 0) {
         let level = this.variations.level();
@@ -60,7 +66,7 @@ export class variationbox {
         }
         else {
           openbracket.append("( ");
-          closingbracket.textContent = ")";
+          closingbracket.textContent = ") ";
         }
         openbracket.setAttribute("data-address",JSON.stringify(this.variations.address()) + "open");
         closingbracket.setAttribute("data-address",JSON.stringify(this.variations.address()) + "close");
@@ -97,7 +103,7 @@ export class variationbox {
       else { // branch == 0 && address.length > 1
         prevaddress = address.slice(0,address.length-2);
         let nbranches = this.variations.numberOfBranchesAt(prevaddress);
-        if (address[address.length-2] == nbranches-1) { // there are no branches between the previous move and the current move
+        if (address[address.length-2] > 0 || nbranches == 1) { // there are no branches between the previous move and the current move
           prevaddress.push(address[address.length-2]);
           prev = this.variationsDiv.querySelector("[data-address='" + JSON.stringify(prevaddress) + "']");
           prev.after(span);
@@ -111,7 +117,7 @@ export class variationbox {
         if (halfmove % 2 == 1) {
           text += (halfmove+1)/2 + ". " + move.san + " ";
         }
-        else if (address[address.length-2] != nbranches-1) {
+        else if (address[address.length-2] == 0 && nbranches > 1) {
           text += halfmove/2 + "... " + move.san + " ";
         }
         else {
@@ -138,7 +144,6 @@ export class variationbox {
       //   that.commentFloatDiv.textContent = that.variations.getCommentsAt(address).join(" ");
       //   let rect = that.div.getBoundingClientRect();
       //   let rect2 = span.getBoundingClientRect()
-      //   console.log(rect2);
       //   that.commentFloatDiv.style.left = (rect2.right - rect.left) + "px";
       //   that.commentFloatDiv.style.top = (rect2.bottom - rect.top) + "px";
       //   that.commentFloatDiv.style.visibility = "visible";
@@ -193,10 +198,10 @@ export class variationbox {
       this.variations.undo();
     }
     address = this.variations.address();
+    this.commentCurrentMoveDiv.textContent = this.variations.getCommentsAt(address).join(" ");
     if (address.length > 0){
       span = this.variationsDiv.querySelector("[data-address='" + JSON.stringify(address) + "']");
       span.style.backgroundColor = "yellow";
-      this.commentCurrentMoveDiv.textContent = this.variations.getCommentsAt(address).join(" ");
     }
   }
 
@@ -210,9 +215,14 @@ export class variationbox {
   restart(newvariations) {
     this.variationsDiv.replaceChildren();
     this.variations.clear();
+    this.variations.halfmove = newvariations.halfmove;
     let that = this;
     function recur(movetree) {
       that.add(movetree.root);
+      let c = movetree.comment;
+      for (let i=0; i<c.length; ++i) {
+        that.addComment(c[i]);
+      }
       for (let i=0; i<movetree.children.length; ++i) {
         recur(movetree.children[i]);
       }
@@ -221,10 +231,10 @@ export class variationbox {
     recur(newvariations);
     let address = newvariations.address();
     this.variations.activateAddress(address);
+    this.commentCurrentMoveDiv.textContent = this.variations.getCommentsAt(address).join(" ");
     if (address.length > 0) {
       let span = this.variationsDiv.querySelector("[data-address='" + JSON.stringify(address) + "']");
       span.style.backgroundColor = "yellow";
-      this.commentCurrentMoveDiv.textContent = this.variations.getCommentsAt(address).join(" ");
     }
   }
 
@@ -236,7 +246,12 @@ export class variationbox {
   }
 
   addComment(s,address) {
-    this.variations.addCommentAt(s,address);
+    if (address === undefined) {
+      this.variations.addComment(s);
+    }
+    else {
+      this.variations.addCommentAt(s,address);
+    }
     this.commentCurrentMoveDiv.textContent = this.variations.getComments().join(" ");
   }
 

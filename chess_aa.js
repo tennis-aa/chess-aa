@@ -317,13 +317,25 @@ export class chess_aa {
     this.dispatcher.dispatchEvent(event);
   }
 
+  printPGNheader() {
+    // the seven tag roster should be printed in order
+    let output = "";
+    let roster = ["Event","Site","Date","Round","White","Black","Result"];
+    for (let i=0; i<roster.length;++i) {
+        output += '[' + roster[i] + ' "' + (this.header[roster[i]] || "") + '"]\n';
+    }
+    for (let [key,value] of Object.entries(this.header)) {
+      if (roster.includes(key)) continue;
+      output += '[' + key + ' "' + value + '"]\n';
+    }
+    output += "\n";
+    return output;
+  }
+
   printPGN(skipheader=true) {
     let output = "";
     if (!skipheader) {
-      for (let [key,value] of Object.entries(this.header)) {
-        output += '[' + key + ' "' + value + '"]\n';
-      }
-      output += "\n";
+      output += this.printPGNheader();
     }
     output += this.variations.toPGN();
     return output;
@@ -332,10 +344,7 @@ export class chess_aa {
   printPGNMain(skipheader=true,withcomments=true) {
     let output = "";
     if (!skipheader) {
-      for (let [key,value] of Object.entries(this.header)) {
-        output += '[' + key + ' "' + value + '"]\n';
-      }
-      output += "\n";
+      output += this.printPGNheader();
     }
     output += this.variations.toPGNMain(withcomments);
     return output;

@@ -61,6 +61,35 @@ export class chess_aa {
     this.startFen = this.DEFAULTFEN
     this.variations = new moveTree();
     this.header = {};
+    this.startingPieceCount = {};
+    this.startingPieceCount[WHITE + PAWN] = 8;
+    this.startingPieceCount[BLACK + PAWN] = 8;
+    this.startingPieceCount[WHITE + QUEEN] = 1;
+    this.startingPieceCount[BLACK + QUEEN] = 1;
+    this.startingPieceCount[WHITE + BISHOP] = 2;
+    this.startingPieceCount[BLACK + BISHOP] = 2;
+    this.startingPieceCount[WHITE + KNIGHT] = 2;
+    this.startingPieceCount[BLACK + KNIGHT] = 2;
+    this.startingPieceCount[WHITE + ROOK] = 2;
+    this.startingPieceCount[BLACK + ROOK] = 2;
+    this.startingPieceCount[WHITE + KING] = 1;
+    this.startingPieceCount[BLACK + KING] = 1;
+
+    this.pieceCount = {...this.startingPieceCount};
+    
+    this.pieceValue = {};
+    this.pieceValue[WHITE + PAWN] = 1;
+    this.pieceValue[BLACK + PAWN] = -1;
+    this.pieceValue[WHITE + QUEEN] = 9;
+    this.pieceValue[BLACK + QUEEN] = -9;
+    this.pieceValue[WHITE + BISHOP] = 3;
+    this.pieceValue[BLACK + BISHOP] = -3;
+    this.pieceValue[WHITE + KNIGHT] = 3;
+    this.pieceValue[BLACK + KNIGHT] = -3;
+    this.pieceValue[WHITE + ROOK] = 5;
+    this.pieceValue[BLACK + ROOK] = -5;
+    this.pieceValue[WHITE + KING] = 100;
+    this.pieceValue[BLACK + KING] = -100;
 
     //Colors
     this.whiteSquareColor = "#d3ba90";
@@ -227,6 +256,7 @@ export class chess_aa {
     }
     this.clearAnnotations();
     this.startFen = fen;
+    this.resetPieceCount();
     let pieces = this.chessboard.getElementsByClassName("chess-aa-piece");
     for (let i = pieces.length-1; i>=0; i--){
       let piece = pieces[i];
@@ -326,6 +356,9 @@ export class chess_aa {
     if (!move) return false;
     move = this.chess.move(move);
     if (!move) return false;
+    if (move.captured) {
+      --this.pieceCount[this.chess.turn() + move.captured]
+    }
     let source = this.squareNamesMap[move.from];
     let target =  this.squareNamesMap[move.to];
     let imageSource = this.chessboard.children[source].getElementsByClassName("chess-aa-piece")[0];
@@ -438,6 +471,9 @@ export class chess_aa {
   unmakeMove(animate=false) {
     let move = this.chess.undo()
     if (move) {
+      if (move.captured) {
+        ++this.pieceCount[(this.chess.turn() == WHITE ? BLACK : WHITE) + move.captured]
+      }
       this.variations.undo();
       let event = new CustomEvent("chess-aa-moveunmade", { detail: { move:move, address:this.variations.address(), fen: this.chess.fen() } });
       this.dispatcher.dispatchEvent(event);
@@ -521,6 +557,35 @@ export class chess_aa {
         }
       }
     }
+  }
+
+  resetPieceCount() {
+    let pieces = [WHITE + PAWN, BLACK + PAWN,WHITE + QUEEN,BLACK + QUEEN,WHITE + BISHOP,BLACK + BISHOP,WHITE + KNIGHT,BLACK + KNIGHT,WHITE + ROOK,BLACK + ROOK,WHITE + KING,BLACK + KING];
+    for (let i=0; i<pieces.length; ++i) {
+      this.pieceCount[pieces[i]] = 0;
+    }
+
+    let board = this.chess.board();
+    for (let row=0; row<8; ++row) {
+      for (let file=0; file<8; ++file) {
+        let piece;
+        if (board[row][file])
+          piece = board[row][file].color + board[row][file].type;
+        else
+          continue;
+
+        ++this.pieceCount[piece];
+      }
+    }
+  }
+
+  material() {
+    let pieces = [WHITE + PAWN, BLACK + PAWN,WHITE + QUEEN,BLACK + QUEEN,WHITE + BISHOP,BLACK + BISHOP,WHITE + KNIGHT,BLACK + KNIGHT,WHITE + ROOK,BLACK + ROOK];
+    let material = 0;
+    for (let i=0; i<pieces.length; ++i) {
+      material += this.pieceCount[pieces[i]] * this.pieceValue[pieces[i]];
+    }
+    return material;
   }
 
   gotoAddress(address) {

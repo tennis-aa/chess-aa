@@ -26,6 +26,8 @@ import { enginebar } from "./chess_aa_enginebar.js";
 import { variationbox } from "./chess_aa_variationbox.js";
 import { enginevariation } from "./chess_aa_enginevariation.js";
 import { openingexplorer } from "./chess_aa_opening_explorer.js";
+import { playerbox } from "./chess_aa_playerbox.js";
+import { WHITE, BLACK } from "./chess.js";
 
 let chess_aa_div = document.getElementById("chess-aa");
 let myChess = new chess_aa(chess_aa_div);
@@ -38,6 +40,10 @@ let enginevariation_div = document.getElementById("chess-aa-enginevariation");
 let myEngineVariation = new enginevariation(enginevariation_div, myChess, myChessengine);
 let openingexplorer_div = document.getElementById("chess-aa-openingexplorer");
 let myOpeningExplorer = new openingexplorer(openingexplorer_div,myChess);
+// let playerboxup_div = document.getElementById("chess-aa-playerbox-up");
+// let playerboxBlack = new playerbox(playerboxup_div,myChess,BLACK);
+// let playerboxdown_div = document.getElementById("chess-aa-playerbox-down");
+// let playerboxWhite = new playerbox(playerboxdown_div,myChess,WHITE);
 
 document.getElementById("fen").value = "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8";
 window.restart = function () {
@@ -103,4 +109,9 @@ window.printComment = function() {
   div.textContent = myChess.getComments().join(" ");
 }
 
-window.x = myChessengine;
+window.printMaterial = function() {
+  let div = document.getElementById("testbox");
+  div.textContent = myChess.material();
+}
+
+window.x = myChess;

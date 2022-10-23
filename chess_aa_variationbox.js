@@ -1,7 +1,7 @@
 export class variationbox {
   constructor(main_div, chess_aa) {
     this.chess_aa = chess_aa;
-    this.variations = chess_aa.variations.copy(); // we keep track of a moveTree analogous to the chess_aa moveTree to avoid conflicts when moves are made too quickly (several moves are made before the events are handled)
+    this.activeAddress = [];
 
     this.div = document.createElement("div");
     this.div.style.position = "relative";
@@ -19,23 +19,28 @@ export class variationbox {
     this.div.appendChild(this.commentFloatDiv);
     main_div.appendChild(this.div);
 
+    this.restart();
+
     chess_aa.dispatcher.addEventListener("chess-aa-movemade", this.addHandler());
     chess_aa.dispatcher.addEventListener("chess-aa-moveunmade", this.undoHandler());
     chess_aa.dispatcher.addEventListener("chess-aa-newposition", this.restartHandler());
     chess_aa.dispatcher.addEventListener("chess-aa-variationremoval", this.restartHandler());
-    chess_aa.dispatcher.addEventListener("chess-aa-addedcomment", this.addCommentHandler());
-    chess_aa.dispatcher.addEventListener("chess-aa-deletedcomment", this.deleteCommentHandler());
-    chess_aa.dispatcher.addEventListener("chess-aa-clearcomments", this.clearCommentsHandler());
+    chess_aa.dispatcher.addEventListener("chess-aa-addedcomment", this.updateCommentHandler());
+    chess_aa.dispatcher.addEventListener("chess-aa-deletedcomment", this.updateCommentHandler());
+    chess_aa.dispatcher.addEventListener("chess-aa-clearcomments", this.updateCommentHandler());
   }
 
-  add(move) {
-    let addressBefore = this.variations.address();
-    if (move && this.variations.add(move)) {
-      let span = document.createElement("span");
+  add(move,newaddress) {
+    if (!move) return;
+    let address = [...newaddress];
+    let addressBefore = [...this.activeAddress];
+    let span = this.variationsDiv.querySelector("[data-address='" + JSON.stringify(address) + "']");
+    if (!span) {
+      // new move (as opposed to an existing move that was redone)
+      span = document.createElement("span");
       span.style.cursor = "pointer";
-      span.setAttribute("data-address",JSON.stringify(this.variations.address()));
-      let halfmove = this.variations.activeHalfmove();
-      let address = this.variations.address();
+      span.setAttribute("data-address",JSON.stringify(address));
+      let halfmove = this.chess_aa.variations.halfmoveAt(address);
       let branch = address[address.length-1];
       let openbracket;
       let closingbracket;
@@ -54,10 +59,10 @@ export class variationbox {
         span.textContent = text;
       }
       else if (branch > 0) {
-        let level = this.variations.level();
+        let level = this.chess_aa.variations.levelAt(address);
         variationspan = document.createElement("span");
         variationspan.className = "chess-aa-variationbox-variation";
-        variationspan.setAttribute("data-address",JSON.stringify(this.variations.address()) + "container");
+        variationspan.setAttribute("data-address",JSON.stringify(address) + "container");
         openbracket = document.createElement("span");
         closingbracket = document.createElement("span");
         if (level == 1) {
@@ -68,8 +73,8 @@ export class variationbox {
           openbracket.append("( ");
           closingbracket.textContent = ") ";
         }
-        openbracket.setAttribute("data-address",JSON.stringify(this.variations.address()) + "open");
-        closingbracket.setAttribute("data-address",JSON.stringify(this.variations.address()) + "close");
+        openbracket.setAttribute("data-address",JSON.stringify(address) + "open");
+        closingbracket.setAttribute("data-address",JSON.stringify(address) + "close");
         variationspan.appendChild(openbracket);
         variationspan.appendChild(span);
         variationspan.appendChild(closingbracket);
@@ -94,7 +99,7 @@ export class variationbox {
 
         // the following move in the main variation needs to get the three dots for continuation when a new branch is added
         prevaddress.push(0); // prevaddress is now the address to that following move
-        if (branch == 1 && halfmove % 2 == 1 && this.variations.addressExists(prevaddress)) {
+        if (branch == 1 && halfmove % 2 == 1 && this.chess_aa.variations.addressExists(prevaddress)) {
           prev = this.variationsDiv.querySelector("[data-address='" + JSON.stringify(prevaddress) + "']");
           let s = prev.textContent;
           prev.textContent = ((halfmove+1)/2) + "... " + s;
@@ -102,7 +107,7 @@ export class variationbox {
       }
       else { // branch == 0 && address.length > 1
         prevaddress = address.slice(0,address.length-2);
-        let nbranches = this.variations.numberOfBranchesAt(prevaddress);
+        let nbranches = this.chess_aa.variations.numberOfBranchesAt(prevaddress);
         if (address[address.length-2] > 0 || nbranches == 1) { // there are no branches between the previous move and the current move
           prevaddress.push(address[address.length-2]);
           prev = this.variationsDiv.querySelector("[data-address='" + JSON.stringify(prevaddress) + "']");
@@ -111,6 +116,9 @@ export class variationbox {
         else { // there is at least one branch between the previous move and the current move
           prevaddress.push(nbranches-1);
           prev = this.variationsDiv.querySelector("[data-address='" + JSON.stringify(prevaddress) + "container" + "']");
+          if (!prev) {// when restarting, the branch may not be in place yet, so we place it in the after the prvious move
+            prev = this.variationsDiv.querySelector("[data-address='" + JSON.stringify(prevaddress) + "']");
+          }
           prev.after(span);
         }
 
@@ -133,7 +141,7 @@ export class variationbox {
           that.chess_aa.focus();
       };
       span.oncontextmenu = function() {
-        if (confirm("Are you sure you want to delete the move " + that.variations.moveAt(address).san + " and all subsequent moves in the variation?")) {
+        if (confirm("Are you sure you want to delete the move " + that.chess_aa.variations.moveAt(address).san + " and all subsequent moves in the variation?")) {
           that.remove(address);
         }
         that.chess_aa.focus();
@@ -154,7 +162,7 @@ export class variationbox {
 
       // Highlight current move and show comments
       span.style.backgroundColor = "yellow";
-      this.commentCurrentMoveDiv.textContent = this.variations.getCommentsAt(address).join(" ");
+      this.commentCurrentMoveDiv.textContent = this.chess_aa.variations.getCommentsAt(address).join(" ");
       prevaddress = address.slice(0,address.length-1);
       if (prevaddress.length > 0) {
         prev = this.variationsDiv.querySelector("[data-address='" + JSON.stringify(prevaddress) + "']");
@@ -162,25 +170,21 @@ export class variationbox {
       }
     }
     else {
-      let addressAfter = this.variations.address();
-      if (addressAfter.length != addressBefore.length) {
-        // highlighting when move is redone instead of added
-        let span = this.variationsDiv.querySelector("[data-address='" + JSON.stringify(addressAfter) + "']");
-        span.style.backgroundColor = "yellow";
-        this.commentCurrentMoveDiv.textContent = this.variations.getCommentsAt(addressAfter).join(" ");
-        if (addressBefore.length > 0) {
-          span = this.variationsDiv.querySelector("[data-address='" + JSON.stringify(addressBefore) + "']");
-          span.style.backgroundColor = "";
-        }
+      // highlighting when move is redone instead of added
+      span.style.backgroundColor = "yellow";
+      this.commentCurrentMoveDiv.textContent = this.chess_aa.variations.getCommentsAt(address).join(" ");
+      if (addressBefore.length > 0) {
+        span = this.variationsDiv.querySelector("[data-address='" + JSON.stringify(addressBefore) + "']");
+        span.style.backgroundColor = "";
       }
     }
-  };
+    this.activeAddress = [...address];
+  }
 
   addHandler() {
     let that = this;
     return function (event) {
-      let move = event.detail.move;
-      that.add(move);
+      that.add(event.detail.move,event.detail.address);
     }
   }
 
@@ -190,17 +194,15 @@ export class variationbox {
   }
 
   undo() {
-    let address = this.variations.address();
     let span;
-    if (address.length > 0) {
-      span = this.variationsDiv.querySelector("[data-address='" + JSON.stringify(address) + "']");
+    if (this.activeAddress.length > 0) {
+      span = this.variationsDiv.querySelector("[data-address='" + JSON.stringify(this.activeAddress) + "']");
       span.style.backgroundColor = "";
-      this.variations.undo();
     }
-    address = this.variations.address();
-    this.commentCurrentMoveDiv.textContent = this.variations.getCommentsAt(address).join(" ");
-    if (address.length > 0){
-      span = this.variationsDiv.querySelector("[data-address='" + JSON.stringify(address) + "']");
+    this.activeAddress.pop();
+    this.commentCurrentMoveDiv.textContent = this.chess_aa.variations.getCommentsAt(this.activeAddress).join(" ");
+    if (this.activeAddress.length > 0){
+      span = this.variationsDiv.querySelector("[data-address='" + JSON.stringify(this.activeAddress) + "']");
       span.style.backgroundColor = "yellow";
     }
   }
@@ -212,77 +214,44 @@ export class variationbox {
     };
   }
 
-  restart(newvariations) {
+  restart() {
     this.variationsDiv.replaceChildren();
-    this.variations.clear();
-    this.variations.halfmove = newvariations.halfmove;
+    this.activeAddress = [];
     let that = this;
-    function recur(movetree) {
-      that.add(movetree.root);
-      let c = movetree.comment;
-      for (let i=0; i<c.length; ++i) {
-        that.addComment(c[i]);
-      }
+    function recur(movetree,currentAddress) {
+      that.add(movetree.root,currentAddress);
       for (let i=0; i<movetree.children.length; ++i) {
-        recur(movetree.children[i]);
+        currentAddress.push(i);
+        recur(movetree.children[i],currentAddress);
+        currentAddress.pop();
       }
       that.undo();
     }
-    recur(newvariations);
-    let address = newvariations.address();
-    this.variations.activateAddress(address);
-    this.commentCurrentMoveDiv.textContent = this.variations.getCommentsAt(address).join(" ");
+    recur(this.chess_aa.variations,[]);
+    let address = this.chess_aa.variations.address();
+    this.commentCurrentMoveDiv.textContent = this.chess_aa.variations.getCommentsAt(address).join(" ");
     if (address.length > 0) {
       let span = this.variationsDiv.querySelector("[data-address='" + JSON.stringify(address) + "']");
       span.style.backgroundColor = "yellow";
     }
+    this.activeAddress = address;
   }
 
   restartHandler() {
     let that = this;
     return function(event) {
-      that.restart(event.detail.variations);
+      that.restart();
     };
   }
 
-  addComment(s,address) {
-    if (address === undefined) {
-      this.variations.addComment(s);
-    }
-    else {
-      this.variations.addCommentAt(s,address);
-    }
-    this.commentCurrentMoveDiv.textContent = this.variations.getComments().join(" ");
+  updateComment() {
+    this.commentCurrentMoveDiv.textContent = this.chess_aa.variations.getCommentsAt(this.activeAddress).join(" ");
   }
 
-  addCommentHandler() {
+  updateCommentHandler() {
     let that = this;
     return function(event) {
-      that.addComment(event.detail.comment, event.detail.address);
-    };
-  }
-
-  deleteComment(address,index) {
-    this.variations.deleteCommentAt(address,index);
-    this.commentCurrentMoveDiv.textContent = this.variations.getComments().join(" ");
-  }
-
-  deleteCommentHandler() {
-    let that = this;
-    return function(event) {
-      that.deleteComment(event.detail.address, event.detail.index);
-    };
-  }
-
-  clearComments() {
-    this.variations.clearComments();
-  }
-
-  clearCommentsHandler() {
-    let that = this;
-    return function(event) {
-      that.clearComments();
-      this.commentCurrentMoveDiv.textContent = this.variations.getComments().join(" ");
+      that.updateComment();
     }
   }
 }

@@ -185,6 +185,18 @@ export class moveTree {
     }
   }
 
+  halfmoveAt(address) {
+    if (address.length == 0) {
+      return this.halfmove;
+    }
+    else if (address[0] >= this.children.length || address[0] < 0) {
+      return null;
+    }
+    else {
+      return this.children[address[0]].halfmoveAt(address.slice(1));
+    }
+  }
+
   activateAddress(address) {
     if (address.length == 0) {
       this.activeBranch = -1;

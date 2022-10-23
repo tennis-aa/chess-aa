@@ -272,7 +272,7 @@ export class chess_aa {
         this.header = {};
       else
         this.header = {FEN: this.startFen, SetUp: "1"};
-      let event = new CustomEvent("chess-aa-newposition", { detail: {fen: this.startFen, variations: this.variations.copy()} });
+      let event = new CustomEvent("chess-aa-newposition", { detail: {fen: this.startFen} });
       this.dispatcher.dispatchEvent(event);
     }
 
@@ -313,7 +313,7 @@ export class chess_aa {
       this.gotoAddress(this.variations.addressLastMain());
     }
 
-    let event = new CustomEvent("chess-aa-newposition", { detail: {fen: this.startFen, variations: this.variations.copy()} });
+    let event = new CustomEvent("chess-aa-newposition", { detail: {fen: this.startFen} });
     this.dispatcher.dispatchEvent(event);
   }
 
@@ -645,7 +645,7 @@ export class chess_aa {
       // otherwise, we just remove the branch
       this.variations.removeAt(address);
 
-      let event = new CustomEvent("chess-aa-variationremoval", { detail: {variations: this.variations.copy()} });
+      let event = new CustomEvent("chess-aa-variationremoval", { detail: {address: address} });
       this.dispatcher.dispatchEvent(event);
 
       return true;

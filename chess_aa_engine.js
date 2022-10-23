@@ -69,9 +69,6 @@ export class chessengine {
     let that = this;
     return function(event) {
       that.chess.load(event.detail.fen);
-      for (let move of event.detail.variations.activeMoves()) {
-        that.chess.move(move);
-      }
       that.analyzePosition();
     }
   }

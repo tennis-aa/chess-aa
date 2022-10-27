@@ -114,9 +114,9 @@ export function loadpgn(str) {
           chess.undo();
           tree.undo();
         }
-        let move = tree.redo();
+        let move = tree.moveAtBranch(0);
         chess.move(move);
-        tree.add(move);
+        tree.redo(0);
         continue;
       }
       else if (char=="*") {

@@ -361,7 +361,7 @@ export class chess_aa {
     return null;
   }
 
-  makeMove(move,animate=false) {
+  makeMove(move,animate=false,forceNewVariation=false) {
     if (!move) return false;
     move = this.chess.move(move);
     if (!move) return false;
@@ -424,7 +424,23 @@ export class chess_aa {
         break;
     }
 
-    this.variations.add(move);
+    let children = this.variations.getChildren();
+    let moveAlreadyMade = false;
+    let branch = 0;
+    for (let i=0; i<children.length; i++) {
+      let child = children[i];
+      if (this.moveEqual(move,child.root)){
+        moveAlreadyMade = true;
+        branch = i;
+        break;
+      }
+    }
+    if (moveAlreadyMade && !forceNewVariation) {
+      this.variations.redo(branch);
+    }
+    else {
+      this.variations.add(move);
+    }
     let event = new CustomEvent("chess-aa-movemade", { detail: { move:move, address:this.variations.address(), fen: this.chess.fen() } });
     this.dispatcher.dispatchEvent(event);
     this.clearAnnotations();
@@ -462,6 +478,12 @@ export class chess_aa {
     }
 
     return true;
+  }
+
+  moveEqual(m1,m2) {
+    return m1.from == m2.from && m1.to == m2.to &&
+        m1.color == m2.color && m1.piece == m2.piece &&
+        m1.promotion == m2.promotion;
   }
 
   requestMove() {
@@ -626,7 +648,7 @@ export class chess_aa {
 
     // make moves after common node
     for (let i=commonNode+1; i<address.length; ++i) {
-      let move = this.variations.redo(address[i]);
+      let move = this.variations.moveAtBranch(address[i]);
       this.makeMove(move,animate);
     }
   }
@@ -656,16 +678,15 @@ export class chess_aa {
   addVariation(moves) {
     let movesmade = 0;
     for (let i=0; i<moves.length; ++i) {
-      if (this.makeMove(moves[i]))
+      if (this.makeMove(moves[i],false,true))
         ++movesmade;
       else
         break;
     }
-    for (let i=0; i<movesmade; ++i) {
-      this.unmakeMove();
-    }
     if (movesmade > 0)
-      this.makeMove(moves[0],true);
+      for (let i=0; i<movesmade-1; ++i) {
+        this.unmakeMove();
+      }
   }
 
   addCommentAt(s, address) {
@@ -1095,7 +1116,7 @@ export class chess_aa {
           return false;
         }
         else if (event.code == "ArrowRight") {
-          let move = that.variations.redo();
+          let move = that.variations.moveAtBranch(0);
           that.makeMove(move,true);
           return false;
         }

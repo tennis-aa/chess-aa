@@ -101,8 +101,11 @@ export class variationbox {
         prevaddress.push(0); // prevaddress is now the address to that following move
         if (branch == 1 && halfmove % 2 == 1 && this.chess_aa.variations.addressExists(prevaddress)) {
           prev = this.variationsDiv.querySelector("[data-address='" + JSON.stringify(prevaddress) + "']");
-          let s = prev.textContent;
-          prev.textContent = ((halfmove+1)/2) + "... " + s;
+          if (prev) {
+            let s = prev.textContent;
+            if (!/[0-9]/.test(s[0])) // if s does not have the movenumber alredy
+              prev.textContent = ((halfmove+1)/2) + "... " + s;
+          }
         }
       }
       else { // branch == 0 && address.length > 1
@@ -116,7 +119,8 @@ export class variationbox {
         else { // there is at least one branch between the previous move and the current move
           prevaddress.push(nbranches-1);
           prev = this.variationsDiv.querySelector("[data-address='" + JSON.stringify(prevaddress) + "container" + "']");
-          if (!prev) {// when restarting, the branch may not be in place yet, so we place it in the after the prvious move
+          if (!prev) {// when restarting, the branch may not be in place yet, so we place it after the previous move
+            prevaddress[prevaddress.length-1] = address[address.length - 1];
             prev = this.variationsDiv.querySelector("[data-address='" + JSON.stringify(prevaddress) + "']");
           }
           prev.after(span);
@@ -137,8 +141,8 @@ export class variationbox {
       // events on span 
       let that = this;
       span.onclick = function(event) {
-          that.chess_aa.gotoAddress(address);
-          that.chess_aa.focus();
+        that.chess_aa.gotoAddress(address);
+        that.chess_aa.focus();
       };
       span.oncontextmenu = function() {
         if (confirm("Are you sure you want to delete the move " + that.chess_aa.variations.moveAt(address).san + " and all subsequent moves in the variation?")) {
@@ -219,13 +223,13 @@ export class variationbox {
     this.activeAddress = [];
     let that = this;
     function recur(movetree,currentAddress) {
-      that.add(movetree.root,currentAddress);
       for (let i=0; i<movetree.children.length; ++i) {
         currentAddress.push(i);
+        that.add(movetree.children[i].root,currentAddress);
         recur(movetree.children[i],currentAddress);
         currentAddress.pop();
+        that.undo();
       }
-      that.undo();
     }
     recur(this.chess_aa.variations,[]);
     let address = this.chess_aa.variations.address();

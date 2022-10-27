@@ -9,24 +9,11 @@ export class moveTree {
 
   add(move) {
     if (this.activeBranch == -1) {
-      let moveAdded = false;
-      for (let i=0; i<this.children.length; i++) {
-        let child = this.children[i];
-        if (this.moveEqual(move,child.root)){
-          child.activeBranch = -1;
-          this.activeBranch = i;
-          moveAdded = true;
-          break;
-        }
-      }
-      if (!moveAdded){
-        this.children.push( new moveTree(move, this.halfmove + 1) );
-        this.activeBranch = this.children.length - 1;
-      }
-      return !moveAdded;
+      this.children.push( new moveTree(move, this.halfmove + 1) );
+      this.activeBranch = this.children.length - 1;
     }
     else {
-      return this.children[this.activeBranch].add(move);
+      this.children[this.activeBranch].add(move);
     }
   }
 
@@ -42,9 +29,25 @@ export class moveTree {
     }
   }
 
-  redo(branch = 0) {
+  redo(branch) {
     if (this.activeBranch == -1) {
-      if (branch < this.children.length){
+      if (branch < this.children.length && branch >= 0) {
+        this.activeBranch = branch;
+        this.children[branch].activeBranch = -1;
+        return true;
+      }
+      else {
+        return false;
+      }
+    }
+    else {
+      return this.children[this.activeBranch].redo(branch);
+    }
+  }
+
+  moveAtBranch(branch = 0) {
+    if (this.activeBranch == -1) {
+      if (branch < this.children.length && branch >= 0){
         return this.children[branch].root;
       }
       else {
@@ -52,7 +55,7 @@ export class moveTree {
       }
     }
     else {
-      return this.children[this.activeBranch].redo(branch);
+      return this.children[this.activeBranch].moveAtBranch(branch);
     }
   }
 
@@ -66,18 +69,8 @@ export class moveTree {
 
   addAt(move,address) {
     if (address.length == 0) {
-      let moveAdded = false;
-      for (let i=0; i<this.children.length; i++) {
-        let child = this.children[i];
-        if (this.moveEqual(move,child.root)){
-          moveAdded = true;
-          break;
-        }
-      }
-      if (!moveAdded){
-        this.children.push( new moveTree(move, this.halfmove + 1) );
-      }
-      return !moveAdded;
+      this.children.push( new moveTree(move, this.halfmove + 1) );
+      return true;
     }
     else if (address[0] >= this.children.length || address[0] < 0) {
       return false;
@@ -175,7 +168,28 @@ export class moveTree {
       return this.children[address[0]].moveAt(address.slice(1));
     }
   }
-  
+
+  getChildren() {
+    if (this.activeBranch == -1) {
+      return this.children;
+    }
+    else {
+      return this.children[this.activeBranch].getChildren();
+    }
+  }
+
+  getChildrenAt(address) {
+    if (address.length == 0) {
+      return this.children;
+    }
+    else if (address[0] >= this.children.length || address[0] < 0) {
+      return null;
+    }
+    else {
+      return this.children[address[0]].getChildrenAt(address.slice(1));
+    }
+  }
+
   activeHalfmove() {
     if (this.activeBranch == -1) {
       return this.halfmove;
@@ -505,11 +519,5 @@ export class moveTree {
       this.children = this.children.slice(0,1);
       this.children[0].prune();
     }
-  }
-
-  moveEqual(m1,m2) {
-    return m1.from == m2.from && m1.to == m2.to &&
-        m1.color == m2.color && m1.piece == m2.piece &&
-        m1.promotion == m2.promotion;
   }
 }

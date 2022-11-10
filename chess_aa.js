@@ -175,6 +175,7 @@ export class chess_aa {
 
     //audio
     this.piecemoveAudio = new Audio("mixkit-modern-click-box-check-1120_trim.wav");
+    this.soundOn = false;
 
     // Settings
     this.showAvailableMoves = true;
@@ -240,6 +241,7 @@ export class chess_aa {
     img.style.left = "0";
     img.style.width = "100%";
     img.style.zIndex = "1";
+    img.style.cursor = "grab";
     img.src = this.pieceSVGsrc(piece.color, piece.type);
     img.onmousedown = this.drag(img);
     img.ondragstart = () => false;
@@ -447,7 +449,7 @@ export class chess_aa {
 
     // display move
     this.chessboard.children[target].appendChild(imageSource);
-    this.piecemoveAudio.play();
+    if (this.soundOn) this.piecemoveAudio.play();
     // animate move
     if (animate) {
       let unit = this.chessboard.children[0].offsetWidth;
@@ -563,7 +565,7 @@ export class chess_aa {
       // display move
       this.chessboard.children[source].appendChild(img);
       this.newPiece(this.chess.get(this.squareNames[target]), target);
-      this.piecemoveAudio.play();
+      if (this.soundOn) this.piecemoveAudio.play();
       // animate move
       if (animate) {
         let unit = this.chessboard.children[0].offsetWidth;
@@ -761,6 +763,7 @@ export class chess_aa {
 
         img.style.width = img.offsetWidth + "px";
         img.style.zIndex = 1000;
+        img.style.cursor = "grabbing";
 
         // moves the img at (clientX, clientY) coordinates
         // taking initial shifts into account
@@ -806,6 +809,7 @@ export class chess_aa {
             img.style.left = "0";
             img.style.zIndex = "1";
             img.style.width = "100%";
+            img.style.cursor = "grab";
             that.clearAnnotations();
           }
         };
@@ -841,6 +845,7 @@ export class chess_aa {
         img.style.left = "0";
         img.style.zIndex = "1";
         img.style.width = "100%";
+        img.style.cursor = "grab";
         that.clearAnnotations();
         div.remove();
       }

@@ -897,33 +897,15 @@ export class chess_aa {
 
         // transparent div to help with dragging functionality
         let img = document.createElement("div");
-        // img.src = that.pen;
-        square.appendChild(img);
-        img.style.width = "15%";
-        img.style.height = "15%";
-        img.style.width = img.offsetWidth + "px";
+        document.body.appendChild(img);
+        img.style.width = window.innerWidth + "px";
+        img.style.height = window.innerHeight + "px";
         img.style.position = 'absolute';
+        img.style.top = 0;
+        img.style.left = 0;
         img.style.zIndex = 1000;
 
-        // moves the img at (pageX, pageY) coordinates
-        // taking initial shifts into account
-        let rect = img.parentElement.getBoundingClientRect();
-        function moveAt(clientX, clientY) {
-          img.style.left = clientX - rect.left - img.offsetWidth / 2 + 'px';
-          img.style.top = clientY - rect.top - img.offsetHeight / 2 + 'px';
-        }
-
-        moveAt(event.clientX, event.clientY);
-
-        function onMouseMove(event) {
-          moveAt(event.clientX, event.clientY);
-        }
-
-        // move the img on mousemove
-        document.addEventListener('mousemove', onMouseMove);
-
         img.onmouseup = function(event) {
-          document.removeEventListener('mousemove', onMouseMove);
           img.remove();
 
           let elemBelow = document.elementFromPoint(event.clientX, event.clientY);
@@ -935,7 +917,7 @@ export class chess_aa {
             let squareelem = elemBelow.parentElement;
             target = Array.from(that.chessboard.children).indexOf(squareelem);
           }
-          if (target && target == source){
+          if (target != null && target == source) {
             if (that.highlightedSquares[source]) {
               that.highlightedSquares[source] = false;
               if((that.rankIndex(source)+that.fileIndex(source)) % 2 != 0){
@@ -950,7 +932,7 @@ export class chess_aa {
               square.style.backgroundColor = that.highlightedSquareColor;
             }
           }
-          else if (target && target >=0 && target < 64) {
+          else if (target != null && target >=0 && target < 64) {
             that.arrowSVG(source,target);
           }
         }

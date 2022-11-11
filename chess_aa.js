@@ -243,7 +243,8 @@ export class chess_aa {
     img.style.zIndex = "1";
     img.style.cursor = "grab";
     img.src = this.pieceSVGsrc(piece.color, piece.type);
-    img.onmousedown = this.drag(img);
+    img.addEventListener("mousedown", this.drag(), false);
+    img.addEventListener("touchstart", this.drag(), false);
     img.ondragstart = () => false;
     elem.appendChild(img);
   }
@@ -751,10 +752,11 @@ export class chess_aa {
     }
   }
 
-  drag(img){
+  drag() {
     let that = this;
     return function(event) {
-      if (event.button == 0) {
+      let img = event.currentTarget;
+      if (event.button == 0 || event.targetTouches) {
         that.clearAnnotations();
         if (that.chess.game_over() || (that.mode == "play" && that.player != that.chess.turn())) {
           return;
@@ -782,22 +784,30 @@ export class chess_aa {
           img.style.top = clientY - rect.top - img.offsetHeight / 2 + 'px';
         }
 
-        moveAt(event.clientX, event.clientY);
+        let left = event.clientX || event.targetTouches[0].clientX;
+        let top = event.clientY || event.targetTouches[0].clientY;
+        moveAt(left, top);
 
         function onMouseMove(event) {
-          moveAt(event.clientX, event.clientY);
+          left = event.clientX || event.targetTouches[0].clientX;
+          top = event.clientY || event.targetTouches[0].clientY;
+          moveAt(left, top);
+          event.preventDefault(); // prevent scrolling on touchscreens
         }
 
         // move the img on mousemove
         document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('touchmove', onMouseMove, {passive: false});
 
         // drop the img, remove unneeded handlers
-        img.onmouseup = function(event) {
+        function release(event) {
           document.removeEventListener('mousemove', onMouseMove);
-          img.onmouseup = null;
+          document.removeEventListener("touchmove", onMouseMove);
+          img.removeEventListener("mouseup", release);
+          img.removeEventListener("touchend", release);
 
           img.hidden = true;
-          let elemBelow = document.elementFromPoint(event.clientX, event.clientY);
+          let elemBelow = document.elementFromPoint(left, top);
           img.hidden = false;
 
           let target;
@@ -821,7 +831,10 @@ export class chess_aa {
             img.style.cursor = "grab";
             that.clearAnnotations();
           }
-        };
+        }
+
+        img.addEventListener("mouseup", release, false);
+        img.addEventListener("touchend", release, false);
       }
     };
   }

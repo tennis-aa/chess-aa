@@ -363,7 +363,7 @@ export class chess_aa {
     return null;
   }
 
-  makeMove(move,animate=false,forceNewVariation=false) {
+  makeMove(move,animate=false,forceNewVariation=false,branch=null) {
     if (!move) return false;
     move = this.chess.move(move);
     if (!move) return false;
@@ -428,13 +428,22 @@ export class chess_aa {
 
     let children = this.variations.getChildren();
     let moveAlreadyMade = false;
-    let branch = 0;
-    for (let i=0; i<children.length; i++) {
-      let child = children[i];
-      if (this.moveEqual(move,child.root)){
+    if (branch == null) {
+      for (let i=0; i<children.length; i++) {
+        let child = children[i];
+        if (this.moveEqual(move,child.root)){
+          moveAlreadyMade = true;
+          branch = i;
+          break;
+        }
+      }
+    }
+    else {
+      if (this.moveEqual(move,children[branch].root)) {
         moveAlreadyMade = true;
-        branch = i;
-        break;
+      }
+      else {
+        console.log("error making move at specified branch: the move at the branch and the move provided are not the same. A new branch will be created for the move.");
       }
     }
     if (moveAlreadyMade && !forceNewVariation) {
@@ -651,7 +660,7 @@ export class chess_aa {
     // make moves after common node
     for (let i=commonNode+1; i<address.length; ++i) {
       let move = this.variations.moveAtBranch(address[i]);
-      this.makeMove(move,animate);
+      this.makeMove(move,animate,false,address[i]);
     }
   }
 

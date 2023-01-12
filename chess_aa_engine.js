@@ -1,10 +1,10 @@
 import { Chess } from "./chess.js";
 
 export class chessengine {
-  constructor(chess_aa) {
+  constructor(chess_aa, engine_path) {
     this.chess_aa = chess_aa;
 
-    this.engine = new Worker("stockfish.js");
+    this.engine = new Worker(engine_path);
     this.engineOn = false;
     this.engine.onmessage = this.engineOnMessage();
     this.engineMultipv = 3;

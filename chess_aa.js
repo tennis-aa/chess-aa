@@ -174,7 +174,7 @@ export class chess_aa {
     main_div.appendChild(this.container);
 
     //audio
-    this.piecemoveAudio = new Audio("mixkit-modern-click-box-check-1120_trim.wav");
+    this.piecemoveAudio = new Audio("../mixkit-modern-click-box-check-1120_trim.wav");
     this.soundOn = false;
 
     // Settings

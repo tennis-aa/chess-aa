@@ -20,13 +20,13 @@ if ("serviceWorker" in navigator) {
 }
 //////////////////////////////////////////////////////////////////////////
 
-import { chess_aa } from "./chess_aa.js";
-import { chessengine } from "./chess_aa_engine.js";
-import { variationbox } from "./chess_aa_variationbox.js";
+import { chess_aa } from "../chess_aa.js";
+import { chessengine } from "../chess_aa_engine.js";
+import { variationbox } from "../chess_aa_variationbox.js";
 
 let chess_aa_div = document.getElementById("chess-aa");
 let myChess = new chess_aa(chess_aa_div,"play");
-let myChessengine = new chessengine(myChess);
+let myChessengine = new chessengine(myChess,"../stockfish.js");
 let variationbox_div = document.getElementById("chess-aa-variationbox");
 let myVariationBox = new variationbox(variationbox_div, myChess);
 

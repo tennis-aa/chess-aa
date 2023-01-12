@@ -20,18 +20,18 @@ if ("serviceWorker" in navigator) {
 }
 //////////////////////////////////////////////////////////////////////////
 
-import { chess_aa } from "./chess_aa.js";
-import { chessengine } from "./chess_aa_engine.js";
-import { enginebar } from "./chess_aa_enginebar.js";
-import { variationbox } from "./chess_aa_variationbox.js";
-import { enginevariation } from "./chess_aa_enginevariation.js";
-import { openingexplorer } from "./chess_aa_opening_explorer.js";
-import { playerbox } from "./chess_aa_playerbox.js";
-import { WHITE, BLACK } from "./chess.js";
+import { chess_aa } from "../chess_aa.js";
+import { chessengine } from "../chess_aa_engine.js";
+import { enginebar } from "../chess_aa_enginebar.js";
+import { variationbox } from "../chess_aa_variationbox.js";
+import { enginevariation } from "../chess_aa_enginevariation.js";
+import { openingexplorer } from "../chess_aa_opening_explorer.js";
+import { playerbox } from "../chess_aa_playerbox.js";
+import { WHITE, BLACK } from "../chess.js";
 
 let chess_aa_div = document.getElementById("chess-aa");
 let myChess = new chess_aa(chess_aa_div);
-let myChessengine = new chessengine(myChess);
+let myChessengine = new chessengine(myChess, "../stockfish.js");
 let enginebar_div = document.getElementById("chess-aa-enginebar");
 let myBar = new enginebar(enginebar_div, myChess, myChessengine);
 let variationbox_div = document.getElementById("chess-aa-variationbox");

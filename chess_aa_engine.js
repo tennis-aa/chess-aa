@@ -4,11 +4,15 @@ export class chessengine {
   constructor(chess_aa, engine_path) {
     this.chess_aa = chess_aa;
 
-    this.engine = new Worker(engine_path);
+    this.engine = null;
     this.engineOn = false;
-    this.engine.onmessage = this.engineOnMessage();
     this.engineMultipv = 3;
-    setTimeout(this.init(),0);
+    this.ok = false;
+    this.launchEngine(engine_path);
+    if (engine_path == "electron") {
+      window.electronInterface.engineOnSwitch(() => {let that = this; that.launchEngine("electron")});
+      window.electronInterface.engineOnMessage(this.engineOnMessage());
+    }
 
     this.startFen = chess_aa.startFen;
     this.moves = [];
@@ -39,17 +43,43 @@ export class chessengine {
   }
 
   init() {
-    let that = this;
-    return function() {
-      that.uciCmd("uci");
-      that.uciCmd("setoption name MultiPV value " + that.engineMultipv);
-      that.uciCmd("setoption name Use NNUE value true");
+    this.uciCmd("setoption name MultiPV value " + this.engineMultipv);
+    this.uciCmd("setoption name Use NNUE value true");
+  }
+
+  launchEngine(engine_path) {
+    this.ok = false;
+    if (this.engineOn) this.switch(false);
+    if (this.engine) {
+      this.engine.terminate();
     }
+    if (engine_path == "electron") { // launch on electron main process
+      window.electronInterface.engineLaunch();
+    }
+    else if (engine_path) {
+      this.engine = new Worker(engine_path);
+      this.engine.onmessage = this.engineOnMessage();
+      this.uciCmd("uci");
+    }
+    else { // default to stockfish
+      engine_path = new URL("stockfish.js", import.meta.url);
+      this.engine = new Worker(engine_path);
+      this.engine.onmessage = this.engineOnMessage();
+      this.uciCmd("uci");
+    }
+    setTimeout(() => {
+      if (!this.ok) console.log("engine does not appear to be working properly");
+    },1000)
   }
 
   uciCmd(cmd) {
-    // console.log("UCI: " + cmd);
-    this.engine.postMessage(cmd);
+    console.log("COMMAND: " + cmd);
+    if (this.engine) {
+      this.engine.postMessage(cmd);
+    }
+    else { // electron
+      window.electronInterface.uciCmd(cmd);
+    }
   }
 
   isPromotion(flag) {
@@ -91,20 +121,30 @@ export class chessengine {
 
   engineOnMessage() {
     let that = this;
-    return function(event) {
-      let line = event.data;
-      // console.log(line)
+    return function(event, message) {
+      let line;
+      if (that.engine) {
+        line = event.data;
+      }
+      else { //electron
+        line = message;
+      }
+      // console.log("OUTPUT: ",line)
+      if (line == "uciok") {
+        that.ok = true;
+        that.init();
+      }
+      if (!that.ok) return;
       if (that.mode == "analysis") {
         if (line.substring(0,4) == "info") {
-          let match = line.match(/^info .*\bdepth ([0-9]+) .*\bmultipv (.+) .*\bscore (\w+) (-?\d+) .*\bpv (.+)/);
-          if (match) {
-            let engineCurrentDepth = parseInt(match[1]);
-            let multipv = parseInt(match[2]) - 1;
-            let engineCurrentScoretype = match[3];
-            let engineCurrentScore = parseInt(match[4]);
-            let engineCurrentVariation = match[5];
+          let info = line.split(/\s+/);
+          if (info.includes("pv")) {
+            let engineCurrentDepth = parseInt(info[info.indexOf("depth")+1]);
+            let multipv = parseInt(info[info.indexOf("multipv")+1]) - 1;
+            let engineCurrentScoretype = info[info.indexOf("score")+1];
+            let engineCurrentScore = parseInt(info[info.indexOf("score")+2]);
             let sanvariation = [];
-            let moves = engineCurrentVariation.split(" ");
+            let moves = info.slice(info.indexOf("pv")+1);
             let movesmade = 0;
             for (let i=0; i<moves.length; ++i) {
               let move = that.chess.move({ from: moves[i].slice(0,2), to: moves[i].slice(2,4), promotion: moves[i].length == 5 ? moves[i].slice(4) : "" });

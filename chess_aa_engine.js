@@ -69,11 +69,11 @@ export class chessengine {
     }
     setTimeout(() => {
       if (!this.ok) console.log("engine does not appear to be working properly");
-    },1000)
+    },5000)
   }
 
   uciCmd(cmd) {
-    console.log("COMMAND: " + cmd);
+    // console.log("COMMAND: " + cmd);
     if (this.engine) {
       this.engine.postMessage(cmd);
     }
@@ -91,7 +91,7 @@ export class chessengine {
     let command = "position fen " + this.chess.fen();
     this.uciCmd(command);
     if (this.engineOn) {
-      this.uciCmd("go");
+      this.uciCmd("go infinite");
     }
   }
 
@@ -172,8 +172,6 @@ export class chessengine {
                                 }
                         );
             that.dispatcher.dispatchEvent(event);
-
-            // console.log("Reply: " + line)
           }
         }
         else if (line == "bestmove (none)") { // mate on the board

@@ -133,6 +133,7 @@ export class chessengine {
       if (line == "uciok") {
         that.ok = true;
         that.init();
+        return;
       }
       if (!that.ok) return;
       if (that.mode == "analysis") {

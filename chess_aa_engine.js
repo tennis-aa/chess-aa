@@ -7,6 +7,7 @@ export class chessengine {
     this.engine = null;
     this.engineOn = false;
     this.engineMultipv = 3;
+    this.engineMaxDepth = 30; // to avoid firing too many events when checkmate is found and depth reaches hundreds 
     this.ok = false;
     this.launchEngine(engine_path);
     if (engine_path == "electron") {
@@ -91,7 +92,7 @@ export class chessengine {
     let command = "position fen " + this.chess.fen();
     this.uciCmd(command);
     if (this.engineOn) {
-      this.uciCmd("go infinite");
+      this.uciCmd("go depth " + this.engineMaxDepth);
     }
   }
 

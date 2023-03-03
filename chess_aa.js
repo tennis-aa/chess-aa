@@ -173,6 +173,9 @@ export class chess_aa {
     this.container.appendChild(this.svgcontainer);
     main_div.appendChild(this.container);
 
+    // piece animation
+    this.animationDuration = 100; //ms
+
     //audio
     this.piecemoveAudio = new Audio(new URL("mixkit-modern-click-box-check-1120_trim.wav", import.meta.url));
     this.soundOn = false;
@@ -467,21 +470,22 @@ export class chess_aa {
       let xdiff = this.fileIndex(source) - this.fileIndex(target);
       imageSource.style.top = ydiff*unit + "px";
       imageSource.style.left = xdiff*unit + "px";
-      let id = null;
-      clearInterval(id);
-      id = setInterval(frame, 5);
-      let pos = 5;
-      function frame() {
-        if (pos == 0) {
-          clearInterval(id);
+      let start;
+      let duration = this.animationDuration;
+      function step(timestamp) {
+        if (start === undefined) start = timestamp;
+        let elapsed = timestamp - start;
+        if (elapsed < duration) {
+        imageSource.style.top = ydiff*(duration-elapsed)/duration*unit + "px";
+        imageSource.style.left = xdiff*(duration-elapsed)/duration*unit + "px";
+        window.requestAnimationFrame(step);
+        }
+        else {
           imageSource.style.top = 0;
           imageSource.style.left = 0;
-        } else {
-          pos--;
-          imageSource.style.top = ydiff*pos/5*unit + "px";
-          imageSource.style.left = xdiff*pos/5*unit + "px";
         }
       }
+      window.requestAnimationFrame(step);
     }
 
     // Ask engine for a move
@@ -583,21 +587,22 @@ export class chess_aa {
         let xdiff = -this.fileIndex(source) + this.fileIndex(target);
         img.style.top = ydiff*unit + "px";
         img.style.left = xdiff*unit + "px";
-        let id = null;
-        clearInterval(id);
-        id = setInterval(frame, 5);
-        let pos = 5;
-        function frame() {
-          if (pos == 0) {
-            clearInterval(id);
+        let start;
+        let duration = this.animationDuration;
+        function step(timestamp) {
+          if (start === undefined) start = timestamp;
+          let elapsed = timestamp - start;
+          if (elapsed < duration) {
+          img.style.top = ydiff*(duration-elapsed)/duration*unit + "px";
+          img.style.left = xdiff*(duration-elapsed)/duration*unit + "px";
+          window.requestAnimationFrame(step);
+          }
+          else {
             img.style.top = 0;
             img.style.left = 0;
-          } else {
-            pos--;
-            img.style.top = ydiff*pos/5*unit + "px";
-            img.style.left = xdiff*pos/5*unit + "px";
           }
         }
+        window.requestAnimationFrame(step);
       }
     }
   }

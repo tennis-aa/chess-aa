@@ -9,6 +9,7 @@ export class chessengine {
     this.engineMultipv = 3;
     this.engineMaxDepth = 30; // to avoid firing too many events when checkmate is found and depth reaches hundreds 
     this.ok = false;
+    this.stopped = false;
     this.launchEngine(engine_path);
     if (engine_path == "electron") {
       window.electronInterface.engineOnSwitch(() => {let that = this; that.launchEngine("electron")});
@@ -26,6 +27,7 @@ export class chessengine {
     chess_aa.dispatcher.addEventListener("chess-aa-moveunmade", this.moveUnmade());
     chess_aa.dispatcher.addEventListener("chess-aa-newposition", this.resetPosition());
     chess_aa.dispatcher.addEventListener("chess-aa-enginemoverequest", this.searchMoveHandler());
+    chess_aa.dispatcher.addEventListener("chess-aa-movestarted", this.stopHandler());
 
     // Pause engine when window is out of focus
     this.engineOnDuringPause = false;
@@ -88,17 +90,31 @@ export class chessengine {
   }
 
   analyzePosition() {
-    this.uciCmd("stop");
+    this.stop;
     let command = "position fen " + this.chess.fen();
     this.uciCmd(command);
     if (this.engineOn) {
+      this.stopped = false;
       this.uciCmd("go depth " + this.engineMaxDepth);
+    }
+  }
+
+  stop() {
+    this.stopped = true;
+    this.uciCmd("stop");
+  }
+
+  stopHandler() {
+    let that = this;
+    return function(event) {
+      that.stop();
     }
   }
 
   resetPosition() {
     let that = this;
     return function(event) {
+      that.stop();
       that.chess.load(event.detail.fen);
       that.analyzePosition();
     }
@@ -136,16 +152,29 @@ export class chessengine {
         that.init();
         return;
       }
-      if (!that.ok) return;
+      if (!that.ok || that.stopped) return;
       if (that.mode == "analysis") {
-        if (line.substring(0,4) == "info") {
+        let engineCurrentDepth;
+        let engineCurrentScoretype;
+        let engineCurrentScore;
+        let engineCurrentVariation;
+        let multipv;
+        if (that.chess.game_over()) { // mate or draw
+          that.stop();
+          engineCurrentDepth = 0;
+          engineCurrentScoretype = that.chess.in_checkmate() ? "mate" : "draw";
+          engineCurrentScore = 0;
+          engineCurrentVariation = [];
+          multipv = 0;
+        }
+        else if (line.substring(0,4) == "info") {
           let info = line.split(/\s+/);
           if (info.includes("pv")) {
-            let engineCurrentDepth = parseInt(info[info.indexOf("depth")+1]);
-            let multipv = parseInt(info[info.indexOf("multipv")+1]) - 1;
-            let engineCurrentScoretype = info[info.indexOf("score")+1];
-            let engineCurrentScore = parseInt(info[info.indexOf("score")+2]);
-            let sanvariation = [];
+            engineCurrentDepth = parseInt(info[info.indexOf("depth")+1]);
+            multipv = parseInt(info[info.indexOf("multipv")+1]) - 1;
+            engineCurrentScoretype = info[info.indexOf("score")+1];
+            engineCurrentScore = parseInt(info[info.indexOf("score")+2]);
+            engineCurrentVariation = [];
             let moves = info.slice(info.indexOf("pv")+1);
             let movesmade = 0;
             for (let i=0; i<moves.length; ++i) {
@@ -154,7 +183,7 @@ export class chessengine {
                 break;
               }
               ++movesmade;
-              sanvariation.push(move);
+              engineCurrentVariation.push(move);
             }
             if (movesmade == 0) {
               return;
@@ -162,39 +191,28 @@ export class chessengine {
             for (let i=0; i<movesmade; ++i) {
               that.chess.undo();
             }
-            let event = new CustomEvent("chess-aa-engineEvaluation", 
-                                {detail: {turn: that.chess.turn(),
-                                          score: engineCurrentScore,
-                                          scoreType: engineCurrentScoretype,
-                                          depth: engineCurrentDepth,
-                                          variation: sanvariation,
-                                          multipv: multipv,
-                                          fen: that.chess.fen()
-                                        }
-                                }
-                        );
-            that.dispatcher.dispatchEvent(event);
+          }
+          else {
+            return;
           }
         }
-        else if (line == "bestmove (none)") { // mate on the board
-          let engineCurrentDepth = 1000;
-          let engineCurrentScoretype = "mate";
-          let engineCurrentScore = 0;
-          let engineCurrentVariation = [];
-          let event = new CustomEvent("chess-aa-engineEvaluation", 
-                              {detail: {turn: that.chess.turn(),
-                                        score: engineCurrentScore,
-                                        scoreType: engineCurrentScoretype,
-                                        depth: engineCurrentDepth,
-                                        variation: engineCurrentVariation,
-                                        multipv: 0,
-                                        fen: that.chess.fen()
-                                      }
-                              }
-                      );
-          that.dispatcher.dispatchEvent(event);
+        else {
+          return;
         }
-      }
+        let event = new CustomEvent("chess-aa-engineEvaluation", 
+          {detail: 
+            {turn: that.chess.turn(),
+              score: engineCurrentScore,
+              scoreType: engineCurrentScoretype,
+              depth: engineCurrentDepth,
+              variation: engineCurrentVariation,
+              multipv: multipv,
+              fen: that.chess.fen()
+            }
+          }
+        );
+        that.dispatcher.dispatchEvent(event);
+      } // end analysis
       else if (that.mode == "play") {
         if (line.startsWith("bestmove")) {
           let moveString = line.split(" ")[1];
@@ -218,7 +236,7 @@ export class chessengine {
       this.dispatcher.dispatchEvent(event);
     }
     else {
-      this.uciCmd("stop");
+      this.stop();
       this.engineOn = false;
       let event = new CustomEvent("chess-aa-engineSwitchOnOff",{detail:{on:false}});
       this.dispatcher.dispatchEvent(event);
@@ -246,6 +264,7 @@ export class chessengine {
   }
 
   searchMove(fen) {
+    this.stopped = false;
     this.uciCmd("position fen " + fen);
     this.uciCmd("go movetime 1000");
   }

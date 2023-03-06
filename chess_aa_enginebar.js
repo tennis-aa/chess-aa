@@ -54,7 +54,7 @@ export class enginebar {
       if (event.detail.multipv > 0){
         return;
       }
-      if (event.detail.depth < 10) {
+      if (event.detail.depth < 10 && event.detail.depth > 0) {
         return;
       }
       let whiteShare;
@@ -99,6 +99,11 @@ export class enginebar {
           that.black.textContent = "M" + (-score);
           that.white.textContent = "";
         }
+      }
+      else if (scoreType == "draw") {
+        whiteShare = 50;
+        that.black.textContent = "1/2";
+        that.white.textContent = "1/2";
       }
 
       that.black.style.height = "" + (100-whiteShare) + "%";

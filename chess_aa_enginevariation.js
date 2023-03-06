@@ -31,6 +31,13 @@ export class enginevariation {
     let that = this;
     return function(event) {
       that.depthSpan.textContent = event.detail.depth;
+      if (event.detail.variation.length == 0) { // mate or draw
+        for (let i=0; i<that.variationdivs.length; ++i) {
+          that.variationdivs[i].replaceChildren("#");
+        }
+        return;
+      }
+
       let variation = [];
       let variationdiv = that.variationdivs[event.detail.multipv];
       variationdiv.replaceChildren();
@@ -57,11 +64,6 @@ export class enginevariation {
           that.chess_aa.addVariation(variation.slice(0,n+1));
           that.chess_aa.focus();
         };
-      }
-      if (event.detail.variation.length == 0) { //mate
-        for (let i=0; i<that.variationdivs.length; ++i) {
-          that.variationdivs[i].replaceChildren("#");
-        }
       }
     };
   }

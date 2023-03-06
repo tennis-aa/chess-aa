@@ -371,6 +371,10 @@ export class chess_aa {
     if (!move) return false;
     move = this.chess.move(move);
     if (!move) return false;
+
+    let event = new Event("chess-aa-movestarted");
+    this.dispatcher.dispatchEvent(event);
+
     if (move.captured) {
       --this.pieceCount[this.chess.turn() + move.captured]
     }
@@ -456,9 +460,10 @@ export class chess_aa {
     else {
       this.variations.add(move);
     }
-    let event = new CustomEvent("chess-aa-movemade", { detail: { move:move, address:this.variations.address(), fen: this.chess.fen() } });
-    this.dispatcher.dispatchEvent(event);
     this.clearAnnotations();
+
+    let address = this.variations.address();
+    let fen = this.chess.fen();
 
     // display move
     this.chessboard.children[target].appendChild(imageSource);
@@ -472,6 +477,7 @@ export class chess_aa {
       imageSource.style.left = xdiff*unit + "px";
       let start;
       let duration = this.animationDuration;
+      let that = this;
       function step(timestamp) {
         if (start === undefined) start = timestamp;
         let elapsed = timestamp - start;
@@ -483,9 +489,15 @@ export class chess_aa {
         else {
           imageSource.style.top = 0;
           imageSource.style.left = 0;
+          let event = new CustomEvent("chess-aa-movemade", { detail: { move:move, address:address, fen:fen } });
+          that.dispatcher.dispatchEvent(event);
         }
       }
       window.requestAnimationFrame(step);
+    }
+    else {
+      let event = new CustomEvent("chess-aa-movemade", { detail: { move:move, address:address, fen:fen } });
+      this.dispatcher.dispatchEvent(event);
     }
 
     // Ask engine for a move
@@ -518,13 +530,17 @@ export class chess_aa {
   unmakeMove(animate=false) {
     let move = this.chess.undo()
     if (move) {
+      let event = new Event("chess-aa-movestarted");
+      this.dispatcher.dispatchEvent(event);
+
       if (move.captured) {
         ++this.pieceCount[(this.chess.turn() == WHITE ? BLACK : WHITE) + move.captured]
       }
       this.variations.undo();
-      let event = new CustomEvent("chess-aa-moveunmade", { detail: { move:move, address:this.variations.address(), fen: this.chess.fen() } });
-      this.dispatcher.dispatchEvent(event);
       this.clearAnnotations();
+
+      let address = this.variations.address();
+      let fen = this.chess.fen();
 
       let source = this.squareNamesMap[move.from];
       let target = this.squareNamesMap[move.to];
@@ -589,6 +605,7 @@ export class chess_aa {
         img.style.left = xdiff*unit + "px";
         let start;
         let duration = this.animationDuration;
+        let that = this;
         function step(timestamp) {
           if (start === undefined) start = timestamp;
           let elapsed = timestamp - start;
@@ -600,9 +617,15 @@ export class chess_aa {
           else {
             img.style.top = 0;
             img.style.left = 0;
+            let event = new CustomEvent("chess-aa-moveunmade", { detail: { move:move, address:address, fen:fen } });
+            that.dispatcher.dispatchEvent(event);
           }
         }
         window.requestAnimationFrame(step);
+      }
+      else {
+        let event = new CustomEvent("chess-aa-moveunmade", { detail: { move:move, address:address, fen:fen } });
+        this.dispatcher.dispatchEvent(event);
       }
     }
   }

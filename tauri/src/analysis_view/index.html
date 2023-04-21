@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>chess-aa</title>
+    <link rel="stylesheet" href="./assets/main.css">
+  </head>
+  <body>
+    <div>
+      chess-aa
+    </div>
+    <!-- <div id="chess-aa-playerbox-up"></div> -->
+    <div id="container">
+      <div id="chess-aa-enginebar"></div>
+      <div id="chess-aa"></div>
+      <div id="variationUtilities">
+        <div id="chess-aa-variationbox"></div>
+        <div id="chess-aa-enginevariation"></div>
+      </div>
+      <div id="chess-aa-openingexplorer">
+        <label for="openingExplorerCheckbox">Turn opening explorer on/off</label>
+        <input type="checkbox" id="openingExplorerCheckbox">
+      </div>
+    </div>
+    <!-- <div id="chess-aa-playerbox-down"></div> -->
+    <div id="test">
+      <button onclick="restart()">Restart</button>
+      <button onclick="flipBoard()">Flip board</button>
+      <button onclick="printVariations()">Variations</button>
+      <button onclick="printPGNMain()">PGN</button>
+      <button onclick="printFEN()">FEN</button>
+      <button onclick="printMaterial()">Material</button>
+      <!-- <button onclick="printComment()">Print comment</button> -->
+      <label for="engineCheckbox">Turn engine on/off</label>
+      <input type="checkbox" id="engineCheckbox">
+      <div id="testbox"></div>
+
+      <textarea id="pgn" placeholder="Type pgn"></textarea>
+      <button onclick="load_pgn()">Load PGN</button>
+      <textarea id="fen" placeholder="Type fen"></textarea>
+      <button onclick="load_fen()">Load fen</button>
+      <textarea id="comment" placeholder="Type comment"></textarea>
+      <button onclick="addComment()">Add comment</button>
+      <button onclick="deleteComment()">Delete comment</button>
+      <button onclick="clearComments()">Clear all comments</button>
+    </div>
+    <script src="preload.js" type="module"></script>
+    <script src="main.js" type="module"></script>
+  </body>
+</html>

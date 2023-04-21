@@ -11,9 +11,9 @@ export class chessengine {
     this.ok = false;
     this.stopped = false;
     this.launchEngine(engine_path);
-    if (engine_path == "electron") {
-      window.electronInterface.engineOnSwitch(() => {let that = this; that.launchEngine("electron")});
-      window.electronInterface.engineOnMessage(this.engineOnMessage());
+    if (engine_path == "desktop") {
+      window.engineAPI.engineOnSwitch(() => {let that = this; that.launchEngine("desktop")});
+      window.engineAPI.engineOnMessage(this.engineOnMessage());
     }
 
     this.startFen = chess_aa.startFen;
@@ -56,8 +56,8 @@ export class chessengine {
     if (this.engine) {
       this.engine.terminate();
     }
-    if (engine_path == "electron") { // launch on electron main process
-      window.electronInterface.engineLaunch();
+    if (engine_path == "desktop") { // launch on desktop
+      window.engineAPI.engineLaunch();
     }
     else if (engine_path) {
       this.engine = new Worker(engine_path);
@@ -80,8 +80,8 @@ export class chessengine {
     if (this.engine) {
       this.engine.postMessage(cmd);
     }
-    else { // electron
-      window.electronInterface.uciCmd(cmd);
+    else { // desktop
+      window.engineAPI.uciCmd(cmd);
     }
   }
 
@@ -143,7 +143,7 @@ export class chessengine {
       if (that.engine) {
         line = event.data;
       }
-      else { //electron
+      else { //desktop
         line = message;
       }
       // console.log("OUTPUT: ",line)

@@ -1,0 +1,48 @@
+{
+  "build": {
+    "beforeDevCommand": "",
+    "beforeBuildCommand": "",
+    "devPath": "../src/analysis_view",
+    "distDir": "../src/analysis_view",
+    "withGlobalTauri": true
+  },
+  "package": {
+    "productName": "chess-aa-tauri",
+    "version": "0.0.0"
+  },
+  "tauri": {
+    "allowlist": {
+      "all": false,
+      "shell": {
+        "all": false,
+        "open": true,
+        "execute": true
+      }
+    },
+    "bundle": {
+      "active": true,
+      "icon": [
+        "icons/32x32.png",
+        "icons/icon.icns",
+        "icons/icon.ico"
+      ],
+      "identifier": "tennis-aa.chess-aa.tauri",
+      "targets": "all"
+    },
+    "security": {
+      "csp": null
+    },
+    "updater": {
+      "active": false
+    },
+    "windows": [
+      {
+        "fullscreen": false,
+        "resizable": true,
+        "title": "chess-aa-tauri",
+        "width": 800,
+        "height": 600
+      }
+    ]
+  }
+}

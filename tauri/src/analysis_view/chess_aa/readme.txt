@@ -1,0 +1,1 @@
+You need to copy the files in the root folder here for the tauri app to work

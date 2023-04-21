@@ -1,6 +1,6 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
-contextBridge.exposeInMainWorld('electronInterface', {
+contextBridge.exposeInMainWorld('engineAPI', {
   uciCmd: (cmd) => ipcRenderer.send('uci-cmd', cmd),
   engineLaunch: () => ipcRenderer.send('engine-launch'),
   engineOnMessage: (callback) => ipcRenderer.on('engine-message', callback),

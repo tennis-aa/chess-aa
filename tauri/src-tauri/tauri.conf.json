@@ -2,8 +2,8 @@
   "build": {
     "beforeDevCommand": "",
     "beforeBuildCommand": "",
-    "devPath": "../src/analysis_view",
-    "distDir": "../src/analysis_view",
+    "devPath": "../src",
+    "distDir": "../src",
     "withGlobalTauri": true
   },
   "package": {
@@ -17,6 +17,11 @@
         "all": false,
         "open": true,
         "execute": true
+      },
+      "dialog": {
+        "all": false,
+        "message": true,
+        "open": true
       }
     },
     "bundle": {
@@ -34,15 +39,6 @@
     },
     "updater": {
       "active": false
-    },
-    "windows": [
-      {
-        "fullscreen": false,
-        "resizable": true,
-        "title": "chess-aa-tauri",
-        "width": 800,
-        "height": 600
-      }
-    ]
+    }
   }
 }

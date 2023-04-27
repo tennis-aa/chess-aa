@@ -4,9 +4,9 @@ export class openingexplorer {
     this.div.textContent = "Powered by the ";
     let lichessLink = document.createElement("a");
     lichessLink.textContent = "lichess opening explorer";
-    lichessLink.setAttribute("src","https://lichess.org/blog/Vs0xMTAAAD4We4Ey/opening-explorer");
+    lichessLink.setAttribute("href","https://lichess.org/blog/Vs0xMTAAAD4We4Ey/opening-explorer");
     this.div.appendChild(lichessLink);
-    this.div.textContent += " masters database.";
+    this.div.append(" masters database.");
 
     this.openingName = document.createElement("div");
 

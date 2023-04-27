@@ -31,8 +31,8 @@ export class chessengine {
 
     // Pause engine when window is out of focus
     this.engineOnDuringPause = false;
-    // window.addEventListener("blur", this.pauseEngine());
-    // window.addEventListener("focus", this.unpauseEngine());
+    window.addEventListener("blur", this.pauseEngine());
+    window.addEventListener("focus", this.unpauseEngine());
 
     if (chess_aa.mode == "play") {
       this.mode = "play";

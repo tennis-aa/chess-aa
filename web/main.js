@@ -26,6 +26,7 @@ import { enginebar } from "../chess_aa_enginebar.js";
 import { variationbox } from "../chess_aa_variationbox.js";
 import { enginevariation } from "../chess_aa_enginevariation.js";
 import { openingexplorer } from "../chess_aa_opening_explorer.js";
+import { tablebase } from "../chess_aa_tablebase.js";
 import { playerbox } from "../chess_aa_playerbox.js";
 import { WHITE, BLACK } from "../chess.js";
 
@@ -40,6 +41,8 @@ let enginevariation_div = document.getElementById("chess-aa-enginevariation");
 let myEngineVariation = new enginevariation(enginevariation_div, myChess, myChessengine);
 let openingexplorer_div = document.getElementById("chess-aa-openingexplorer");
 let myOpeningExplorer = new openingexplorer(openingexplorer_div,myChess);
+let tablebase_div = document.getElementById("chess-aa-tablebase");
+let myTablebase = new tablebase(tablebase_div,myChess);
 // let playerboxup_div = document.getElementById("chess-aa-playerbox-up");
 // let playerboxBlack = new playerbox(playerboxup_div,myChess,BLACK);
 // let playerboxdown_div = document.getElementById("chess-aa-playerbox-down");
@@ -82,6 +85,10 @@ myChessengine.dispatcher.addEventListener("chess-aa-engineSwitchOnOff", function
 
 document.getElementById("openingExplorerCheckbox").onchange = function engineSwitch(e) {
   myOpeningExplorer.switch(e.target.checked);
+};
+
+document.getElementById("tablebaseCheckbox").onchange = function engineSwitch(e) {
+  myTablebase.switch(e.target.checked);
 };
 
 window.load_pgn = function() {

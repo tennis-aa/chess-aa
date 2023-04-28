@@ -10,11 +10,18 @@ export class enginevariation {
     this.variationdivs = [];
     for (let i=0; i<chess_aa_engine.engineMultipv; ++i) {
       this.variationdivs.push(document.createElement("div"));
+      this.variationdivs[i].classList.add("chess-aa-engine-variationdiv");
       this.variationdivs[i].textContent = "Variation " + (i+1);
       this.variationdivs[i].style.whiteSpace = "nowrap";
-      this.variationdivs[i].style.overflow = "auto";
+      this.variationdivs[i].style.overflowX = "scroll";
+      this.variationdivs[i].style.scrollbarWidth = "thin";
       this.div.appendChild(this.variationdivs[i]);
     }
+    // To modify scrollbar in chromium (https://stackoverflow.com/a/8051488/12510953)
+    let sheet = document.head.appendChild(document.createElement("style")).sheet;
+    sheet.insertRule(".chess-aa-engine-variationdiv::-webkit-scrollbar {height:5px}");
+    sheet.insertRule(".chess-aa-engine-variationdiv::-webkit-scrollbar-track {background-color:whitesmoke}");
+    sheet.insertRule(".chess-aa-engine-variationdiv::-webkit-scrollbar-thumb {background-color:gainsboro}");
 
     main_div.appendChild(this.div);
 

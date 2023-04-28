@@ -467,7 +467,7 @@ export class chess_aa {
 
     // display move
     this.chessboard.children[target].appendChild(imageSource);
-    if (this.soundOn) this.piecemoveAudio.play();
+    if (this.soundOn) this.piecemoveAudio.cloneNode().play();
     // animate move
     if (animate) {
       let unit = this.chessboard.children[0].offsetWidth;
@@ -595,7 +595,7 @@ export class chess_aa {
       // display move
       this.chessboard.children[source].appendChild(img);
       this.newPiece(this.chess.get(this.squareNames[target]), target);
-      if (this.soundOn) this.piecemoveAudio.play();
+      if (this.soundOn) this.piecemoveAudio.cloneNode().play();
       // animate move
       if (animate) {
         let unit = this.chessboard.children[0].offsetWidth;

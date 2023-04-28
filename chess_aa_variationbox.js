@@ -19,6 +19,26 @@ export class variationbox {
     this.div.appendChild(this.commentFloatDiv);
     main_div.appendChild(this.div);
 
+    this.dialog = document.createElement("dialog");
+    this.dialog.style.border = "none";
+    this.dialog.style.borderRadius = "5px";
+    this.dialog.style.textAlign = "right";
+    this.dialog.textContent = "Delete move ";
+    this.dialogMoveSpan = document.createElement("span");
+    this.dialog.appendChild(this.dialogMoveSpan);
+    this.dialog.append(" and all subsequent moves in the variation?")
+    this.dialog.appendChild(document.createElement("div"));
+    this.dialogConfirm = document.createElement("button");
+    this.dialogConfirm.textContent = "Yes";
+    this.dialogConfirm.style.margin = "10px 5px 0 0";
+    this.dialogCancel = document.createElement("button");
+    this.dialogCancel.textContent = "No";
+    this.dialogCancel.onclick = this.closeDialogHandler();
+    this.dialog.appendChild(this.dialogConfirm);
+    this.dialog.appendChild(this.dialogCancel);
+
+    this.div.appendChild(this.dialog);
+
     this.restart();
 
     chess_aa.dispatcher.addEventListener("chess-aa-movemade", this.addHandler());
@@ -145,15 +165,12 @@ export class variationbox {
         that.chess_aa.focus();
       };
       span.oncontextmenu = function() {
-        if (confirm("Are you sure you want to delete the move " + that.chess_aa.variations.moveAt(address).san + " and all subsequent moves in the variation?")) {
-          that.remove(address);
-        }
-        that.chess_aa.focus();
+        that.showDialog(that.chess_aa.variations.moveAt(address).san, address);
         return false;
       };
       // // You can add a tooltip with the comment using the following event handlers
       // span.onmouseover = function(event) {
-      //   that.commentFloatDiv.textContent = that.variations.getCommentsAt(address).join(" ");
+      //   that.commentFloatDiv.textContent = that.chess_aa.variations.getCommentsAt(address).join(" ");
       //   let rect = that.div.getBoundingClientRect();
       //   let rect2 = span.getBoundingClientRect()
       //   that.commentFloatDiv.style.left = (rect2.right - rect.left) + "px";
@@ -258,4 +275,24 @@ export class variationbox {
       that.updateComment();
     }
   }
+
+  showDialog(move, address) {
+    this.dialogMoveSpan.textContent = move;
+    let that = this;
+    this.dialogConfirm.onclick = function (e) {
+      that.remove(address);
+      that.dialog.close();
+      that.chess_aa.focus();
+    }
+    this.dialog.showModal();
+  }
+
+  closeDialogHandler() {
+    let that = this;
+    return function(e) {
+      that.dialog.close();
+      that.chess_aa.focus();
+    }
+  }
+
 }

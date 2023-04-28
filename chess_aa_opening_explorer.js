@@ -40,6 +40,10 @@ export class openingexplorer {
       this.topGames.children[i].style.cursor = "pointer";
     }
     this.topGameMoves = document.createElement("div");
+    this.topGameMoves.oncontextmenu = function (e) {
+      e.target.replaceChildren();
+      return false;
+    };
 
     this.div.appendChild(this.openingName);
     this.div.appendChild(this.outcomes);
@@ -95,7 +99,6 @@ export class openingexplorer {
                 " [" + game.month + "]: ";
                 that.topGameMoves.textContent += y.moves;
               })
-  
             }
           }
           else {

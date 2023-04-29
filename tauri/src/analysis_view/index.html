@@ -39,7 +39,27 @@
       <button onclick="deleteComment()">Delete comment</button>
       <button onclick="clearComments()">Clear all comments</button>
     </div>
+
+    <!-- dialog windows -->
+    <dialog id="dialog-engine-registration">
+      <label for="engine-name">
+        Assign a unique name for the engine:
+      </label>
+      <input id="engine-registration-name" type="text" placeholder="Name of engine">
+      <button onclick="send_for_registration()">Register</button>
+      <button onclick="cancel_registration()">Cancel</button>
+    </dialog>
+
+    <dialog id="dialog-engine-selection">
+      <label for="engine-select">Select engine</label>
+      <select id="engine-select"></select>
+      <button onclick="send_selection()">Select</button>
+      <button onclick="cancel_selection()">Cancel</button>
+    </dialog>
+
+    <!-- scripts -->
     <script src="preload.js" type="module"></script>
     <script src="main.js" type="module"></script>
+    <script src="dialog.js" type="module"></script>
   </body>
 </html>

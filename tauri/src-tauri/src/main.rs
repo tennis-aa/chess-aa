@@ -22,6 +22,8 @@ struct Engine {
     index : Mutex<Option<usize>>
 }
 
+struct EngineCandidatePath(String);
+
 #[tauri::command]
 fn uci_cmd(command: String, engine: tauri::State<Engine>) {
     // println!("command: {}",command);
@@ -114,20 +116,13 @@ async fn test_engine(path: &str) -> bool {
 async fn search_engine(app: &AppHandle) {
     let selected = FileDialogBuilder::new().add_filter("exe",&["exe"]).pick_file();
     if let Some(path) = selected {
-        let test = test_engine(path.to_str().unwrap()).await;
+        let path = path.to_str().unwrap().to_string();
+        let test = test_engine(&path).await;
         if test {
-            let path = serde_json::to_string(&path).unwrap();
-            WindowBuilder::new(
-                app,
-                "engine-registration".to_string(),
-                tauri::WindowUrl::App("modal_windows/modal_engine_registration.html".into()),
-                )
-                .title("Engine registration")
-                .inner_size(350.0,200.0)
-                .center()
-                .initialization_script(&format!("const path = {}", path))
-                .build()
-                .expect("error building modal window");
+            let engine_candidate = app.state::<Mutex<EngineCandidatePath>>();
+            let mut engine_candidate = engine_candidate.lock().unwrap();
+            engine_candidate.0 = path;
+            app.emit_all("register-engine-dialog", "").unwrap();
         }
         else {
             message(app.get_window("main").as_ref(), "Engine test failed", "The file selected does not appear to be an uci engine");
@@ -153,47 +148,45 @@ fn write_engine_json(app: &AppHandle, json: &Value) -> std::io::Result<()> {
 }
 
 #[tauri::command]
-fn register_engine(name: String, path: String, app: AppHandle, window: tauri::Window) {
+fn register_engine(name: String, app: AppHandle, window: tauri::Window) -> bool {
     let mut json = get_engine_json(&app);
     for engine in json.as_array().unwrap() {
         if engine.get("name").expect("engine should have a name").as_str().unwrap() == name {
             message(Some(&window),"Engine name error","The engine name already exists.");
-            return;
+            return false;
         }
     }
+    let path = app.state::<Mutex<EngineCandidatePath>>();
+    let path = path.lock().unwrap();
     let mut new_engine_json = serde_json::Map::new();
     new_engine_json.insert("name".to_string(), Value::String(name));
-    new_engine_json.insert("path".to_string(), Value::String(path));
+    new_engine_json.insert("path".to_string(), Value::String(path.0.clone()));
     let new_engine_json = Value::Object(new_engine_json);
     json.as_array_mut().unwrap().push(new_engine_json);
     write_engine_json(&app,&json).expect("should be able to write to the file");
-    window.close().expect("should be able to close the window");
+    return true;
 }
 
 fn select_engine(app: &AppHandle) {
     let json = get_engine_json(&app);
-    let init_script = format!("let engines = {}", json.to_string());
-
-    WindowBuilder::new(
-        app,
-        "engine-selection".to_string(),
-        tauri::WindowUrl::App("modal_windows/modal_engine_selection.html".into()),
-        )
-        .title("Engine selection")
-        .inner_size(350.0,200.0)
-        .center()
-        .initialization_script(&init_script)
-        .build()
-        .expect("error building modal window");
+    app.emit_all("select-engine-dialog",json).unwrap();
 }
 
 #[tauri::command]
-fn switch_engine(id: usize, app: AppHandle, window: tauri::Window) {
+fn switch_engine(id: usize, app: AppHandle) {
     let engine = app.state::<Engine>();
     let mut index = engine.index.lock().unwrap();
     *index = Some(id);
     app.emit_all("engine-switch", "").unwrap();
-    window.close().expect("error closing modal window");
+}
+
+#[tauri::command]
+fn select_engine_if_none(app: AppHandle, engine: tauri::State<Engine>) {
+    let child = engine.child.lock().unwrap();
+    if let None = *child {
+        let json = get_engine_json(&app);
+        app.emit_all("select-engine-dialog",json).unwrap();
+    }
 }
 
 fn main() {
@@ -206,7 +199,8 @@ fn main() {
         .add_submenu(Submenu::new("Engine",engine_menu));
     tauri::Builder::default()
         .manage(Engine {child: Mutex::new(None), index: Mutex::new(None)})
-        .invoke_handler(tauri::generate_handler![uci_cmd,launch_engine,register_engine,switch_engine])
+        .manage(Mutex::new(EngineCandidatePath("".to_string())))
+        .invoke_handler(tauri::generate_handler![uci_cmd,launch_engine,register_engine,switch_engine,select_engine_if_none])
         .setup(|app| {
             let window = WindowBuilder::new(
                 app,

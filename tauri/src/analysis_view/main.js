@@ -49,7 +49,7 @@ window.undoMove = function() {
 let enginecheckbox = document.getElementById("engineCheckbox")
 enginecheckbox.onchange = function engineSwitch(e) {
   myChessengine.switch(e.target.checked);
-  window.select_engine_if_none();
+  if (e.target.checked) window.select_engine_if_none();
 };
 myChessengine.dispatcher.addEventListener("chess-aa-engineSwitchOnOff", function(event) {enginecheckbox.checked = event.detail.on})
 

@@ -59,10 +59,13 @@ fn launch_engine(app_handle: AppHandle) {
     }
 
     // Spawn the new engine
-    let (mut rx, child_temp) = Command::new(engine_path)
-        .spawn()
-        .expect("Failed to spawn engine");
-
+    let spawn_option = Command::new(engine_path).spawn();
+    if let Err(error) = spawn_option {
+        println!("{}",error);
+        message(app_handle.get_window("main").as_ref(), "Failed to spawn engine", "The selected engine failed to spawn. Select a different engine");
+        return;
+    }
+    let (mut rx, child_temp) = spawn_option.unwrap();
     *child = Some(child_temp);
 
     // Attach a listener to stdout of the engine to emit the event to the frontend
@@ -189,18 +192,46 @@ fn select_engine_if_none(app: AppHandle, engine: tauri::State<Engine>) {
     }
 }
 
+fn manage_engine(app: &AppHandle) {
+    let json = get_engine_json(&app);
+    app.emit_all("manage-engine-dialog",json).unwrap();
+}
+
+#[tauri::command]
+fn delete_engine(id: usize, app: AppHandle) {
+    let mut json = get_engine_json(&app);
+    json.as_array_mut().unwrap().remove(id);
+    write_engine_json(&app, &json).unwrap();
+
+    // update engine index
+    let engine = app.state::<Engine>();
+    let mut index = engine.index.lock().unwrap();
+    let mut child = engine.child.lock().unwrap();
+    if let Some(x) = *index {
+        if x == id {
+            *index = None;
+            *child = None;
+        }
+        else if x > id {
+            *index = Some(x-1);
+        }
+    }
+}
+
 fn main() {
     println!("Starting tauri app");
 
     let engine_menu = Menu::new()
         .add_item(CustomMenuItem::new("register-engine","Register"))
-        .add_item(CustomMenuItem::new("select-engine", "Select"));
+        .add_item(CustomMenuItem::new("select-engine", "Select"))
+        .add_item(CustomMenuItem::new("manage-engine", "Manage"));
     let menu = Menu::new()//os_default("chess-aa-tauri")
         .add_submenu(Submenu::new("Engine",engine_menu));
     tauri::Builder::default()
         .manage(Engine {child: Mutex::new(None), index: Mutex::new(None)})
         .manage(Mutex::new(EngineCandidatePath("".to_string())))
-        .invoke_handler(tauri::generate_handler![uci_cmd,launch_engine,register_engine,switch_engine,select_engine_if_none])
+        .invoke_handler(tauri::generate_handler![uci_cmd,launch_engine,register_engine,
+            switch_engine,select_engine_if_none,delete_engine])
         .setup(|app| {
             let window = WindowBuilder::new(
                 app,
@@ -223,6 +254,9 @@ fn main() {
                     }
                     "select-engine" => {
                         select_engine(&app_handle);
+                    }
+                    "manage-engine" => {
+                        manage_engine(&app_handle);
                     }
                     _ => {}
                 }

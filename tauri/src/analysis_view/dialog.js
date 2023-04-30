@@ -1,7 +1,7 @@
 // registration
 let dialog_register = document.getElementById("dialog-engine-registration");
 window.register_engine_dialog((event) => {
-  dialog_register.showModal()
+  dialog_register.showModal();
 });
 
 window.send_for_registration = async function () {
@@ -26,7 +26,7 @@ window.select_engine_dialog((event) => {
     option.textContent = engines[i].name;
     select.appendChild(option);
   }
-  dialog_select.showModal()
+  dialog_select.showModal();
 });
 
 window.send_selection = function() {
@@ -37,4 +37,29 @@ window.send_selection = function() {
 
 window.cancel_selection = function() {
   dialog_select.close();
+}
+
+// manage
+let dialog_manage = document.getElementById("dialog-engine-manage");
+window.manage_engine_dialog((event) => {
+  let select = document.getElementById("engine-manage");
+  select.replaceChildren();
+  let engines = event.payload;
+  for (let i=0; i<engines.length; ++i) {
+    let option = document.createElement("option");
+    option.value = i;
+    option.textContent = engines[i].name;
+    select.appendChild(option);
+  }
+  dialog_manage.showModal();
+});
+
+window.delete_manage = function() {
+  let id = parseInt(document.getElementById("engine-manage").value);
+  window.delete_engine(id);
+  dialog_manage.close();
+}
+
+window.cancel_manage = function() {
+  dialog_manage.close();
 }

@@ -1,10 +1,11 @@
 export class moveTree {
   constructor(move = null, halfmove = 0) {
-    this.root = move ? {...move}: null;
+    this.move = move ? {...move}: null;
     this.children = [];
     this.activeBranch = -1;
     this.halfmove = halfmove;
     this.comment = [];
+    this.annotation = [];
   }
 
   add(move) {
@@ -48,7 +49,7 @@ export class moveTree {
   moveAtBranch(branch = 0) {
     if (this.activeBranch == -1) {
       if (branch < this.children.length && branch >= 0){
-        return this.children[branch].root;
+        return this.children[branch].move;
       }
       else {
         return null;
@@ -62,9 +63,10 @@ export class moveTree {
   clear() {
     this.children.length = 0;
     this.activeBranch = -1
-    this.root = null;
+    this.move = null;
     this.comment.length = 0;
     this.halfmove = 0;
+    this.annotation.length = 0;
   }
 
   addAt(move,address) {
@@ -142,15 +144,15 @@ export class moveTree {
     else {
       result = this.children[this.activeBranch].activeMoves();
     }
-    if (this.root) {
-      result.unshift(this.root);
+    if (this.move) {
+      result.unshift(this.move);
     }
     return result;
   }
 
   activeMove() {
     if (this.activeBranch == -1) {
-      return this.root;
+      return this.move;
     }
     else {
       return this.children[this.activeBranch].activeMove();
@@ -159,7 +161,7 @@ export class moveTree {
 
   moveAt(address) {
     if (address.length == 0) {
-      return this.root;
+      return this.move;
     }
     else if (address[0] >= this.children.length || address[0] < 0) {
       return null;
@@ -294,9 +296,10 @@ export class moveTree {
   }
 
   copy() {
-    let copy = new moveTree(this.root, this.halfmove);
+    let copy = new moveTree(this.move, this.halfmove);
     copy.activeBranch = this.activeBranch;
     copy.comment = [...this.comment];
+    copy.annotation = [...this.annotation];
     for (let i=0; i<this.children.length; ++i) {
       copy.children.push(this.children[i].copy());
     }
@@ -306,11 +309,11 @@ export class moveTree {
   toString() {
     let result = "";
     if (this.children.length>0) {
-      result += this.children[0].root.san + " ";
+      result += this.children[0].move.san + " ";
     }
     for (let i=1; i < this.children.length; i++) {
       result += "(";
-      result += this.children[i].root.san + " " + this.children[i].toString();
+      result += this.children[i].move.san + " " + this.children[i].toString();
       result += ") ";
     }
     if (this.children.length>0) {
@@ -321,6 +324,12 @@ export class moveTree {
 
   toPGN(forceMoveNumber=true) {
     let result = "";
+    if (this.move == null) { // this only happens at the root of the tree
+      // we print the comments before the start of the game
+      for (let i=0; i<this.comment.length; ++i) {
+        result += "{" + this.comment[i] + "} ";
+      }
+    }
     // write main line move
     if (this.children.length>0) {
       if (this.children[0].halfmove % 2 == 1) {
@@ -329,7 +338,12 @@ export class moveTree {
       else if (forceMoveNumber) {
         result += this.children[0].halfmove/2 + "... ";
       }
-      result += this.children[0].root.san + " ";
+      result += this.children[0].move.san + " ";
+      for (let i=0; i<this.children[0].annotation.length; ++i) {
+        // we skip the space after the move for suffix annotations
+        if (i==0 && ["!", "?", "!!", "!?", "?!","??"].includes(this.children[0].annotation[i])) result = result.slice(0,-1);
+        result += this.children[0].annotation[i] + " ";
+      }
       for (let i=0; i<this.children[0].comment.length; ++i) {
         result += "{" + this.children[0].comment[i] + "} ";
       }
@@ -343,7 +357,12 @@ export class moveTree {
       else {
         result += this.children[i].halfmove/2 + "... ";
       }
-      result += this.children[i].root.san + " ";
+      result += this.children[i].move.san + " ";
+      for (let j=0; j<this.children[i].annotation.length; ++j) {
+        // we skip the space after the move for suffix annotations
+        if (j==0 && ["!", "?", "!!", "!?", "?!","??"].includes(this.children[0].annotation[i])) result = result.slice(0,-1);
+        result += this.children[i].annotation[j] + " ";
+      }
       for (let j=0; j<this.children[i].comment.length; ++j) {
         result += "{" + this.children[i].comment[j] + "} ";
       }
@@ -354,7 +373,7 @@ export class moveTree {
     }
     // continue main line
     if (this.children.length>0) {
-      // if a variation or comment are before the next move move, we have to force the move number
+      // if a variation or comment are before the next move, we have to force the move number
       result += this.children[0].toPGN(this.children.length>1 || this.children[0].comment.length>0);
     }
     return result;
@@ -362,6 +381,12 @@ export class moveTree {
 
   toPGNMain(withcomments=false,forceMoveNumber=true) {
     let result = "";
+    if (withcomments && this.move == null) { // this only happens at the root of the tree
+      // we print the comments before the start of the game
+      for (let i=0; i<this.comment.length; ++i) {
+        result += "{" + this.comment[i] + "} ";
+      }
+    }
     if (this.children.length>0) {
       if (this.children[0].halfmove % 2 == 1) {
         result += (this.children[0].halfmove+1)/2 + ". ";
@@ -369,8 +394,13 @@ export class moveTree {
       else if (forceMoveNumber) {
         result += this.children[0].halfmove/2 + "... ";
       }
-      result += this.children[0].root.san + " ";
+      result += this.children[0].move.san + " ";
       if (withcomments){
+        for (let i=0; i<this.children[0].annotation.length; ++i) {
+          // we skip the space after the move for suffix annotations
+          if (i==0 && ["!", "?", "!!", "!?", "?!","??"].includes(this.children[0].annotation[i])) result = result.slice(0,-1);
+          result += this.children[0].annotation[i] + " ";
+        }
         for (let i=0; i<this.children[0].comment.length; ++i) {
           result += "{" + this.children[0].comment[i] + "} ";
         }
@@ -511,6 +541,144 @@ export class moveTree {
     this.comment.length = 0;
     for (let i=0; i<this.children.length; ++i) {
       this.children[i].clearComments();
+    }
+  }
+
+  addAnnotation(s) {
+    if (!"$?!".includes(s.slice(0,1)))
+      return;
+    if (this.activeBranch == -1) {
+      this.annotation.push(s);
+    }
+    else {
+      this.children[this.activeBranch].addAnnotation(s);
+    }
+  }
+
+  deleteAnnotation(index) {
+    if (this.activeBranch == -1) {
+      if (index == null) {
+        index = this.annotation.length-1;
+      }
+      if (this.annotation.length > index) {
+        this.annotation.splice(index,1);
+      }
+    }
+    else {
+      this.children[this.activeBranch].deleteAnnotation(index);
+    }
+  }
+
+  deleteAllAnnotations() {
+    if (this.activeBranch == -1) {
+        this.annotation.length = 0;
+    }
+    else {
+      this.children[this.activeBranch].deleteAllAnnotations();
+    }
+  }
+
+  getAnnotation(index=0) {
+    if (this.activeBranch == -1) {
+      if (this.annotation.length > index) {
+        return this.annotation[index];
+      }
+    }
+    else {
+      return this.children[this.activeBranch].getAnnotation(index);
+    }
+  }
+
+  getAnnotations() {
+    if (this.activeBranch == -1) {
+        return this.annotation.slice();
+    }
+    else {
+      return this.children[this.activeBranch].getAnnotations();
+    }
+  }
+
+  addAnnotationAt(s,address) {
+    if (!"$?!".includes(s.slice(0,1)))
+      return;
+    if (address.length == 0) {
+      this.annotation.push(s);
+      return true;
+    }
+    else if (address[0] >= this.children.length || address[0] < 0) {
+      return false;
+    }
+    else {
+      return this.children[address[0]].addAnnotationAt(s,address.slice(1));
+    }
+  }
+
+  deleteAnnotationAt(address,index) {
+    if (address.length == 0) {
+      if (index == null) {
+        index = this.annotation.length-1;
+      }
+      if (index < this.annotation.length) {
+        this.annotation.splice(index,1);
+        return true;
+      }
+      else {
+        return false;
+      }
+    }
+    else if (address[0] >= this.children.length || address[0] < 0) {
+      return false;
+    }
+    else {
+      return this.children[address[0]].deleteAnnotationAt(address.slice(1),index);
+    }
+  }
+
+  deleteAllAnnotationsAt(address) {
+    if (address.length == 0) {
+        this.annotation.length = 0;
+        return true;
+    }
+    else if (address[0] >= this.children.length || address[0] < 0) {
+      return false;
+    }
+    else {
+      return this.children[address[0]].deleteAllAnnotationsAt(address.slice(1));
+    }
+  }
+
+  getAnnotationAt(address,index=0) {
+    if (address.length == 0) {
+      if (index < this.annotation.length) {
+        return this.annotation[index];
+      }
+      else
+        return null;
+    }
+    else if (address[0] >= this.children.length || address[0] < 0) {
+      return null;
+    }
+    else {
+      return this.children[address[0]].getAnnotationAt(address.slice(1),index);
+    }
+  }
+
+  getAnnotationsAt(address) {
+    if (address.length == 0) {
+        return this.annotation.slice();
+    }
+    else if (address[0] >= this.children.length || address[0] < 0) {
+      return null;
+    }
+    else {
+      return this.children[address[0]].getAnnotationsAt(address.slice(1));
+    }
+  }
+
+  clearAnnotations() {
+    this.annotation.length = 0;
+    for (let i=0; i<this.children.length; ++i) {
+      this.children[i].clearAnnotations();
     }
   }
 

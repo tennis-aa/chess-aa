@@ -242,7 +242,7 @@ export class variationbox {
     function recur(movetree,currentAddress) {
       for (let i=0; i<movetree.children.length; ++i) {
         currentAddress.push(i);
-        that.add(movetree.children[i].root,currentAddress);
+        that.add(movetree.children[i].move,currentAddress);
         recur(movetree.children[i],currentAddress);
         currentAddress.pop();
         that.undo();

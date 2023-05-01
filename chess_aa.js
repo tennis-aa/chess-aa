@@ -311,8 +311,7 @@ export class chess_aa {
       this.loadFEN(this.DEFAULTFEN,true);
     }
     this.header = header;
-    this.variations.children = tree.children;
-    this.variations.halfmove = tree.halfmove;
+    this.variations = tree;
 
     if (this.mode == "play") {
       this.variations.prune()
@@ -439,7 +438,7 @@ export class chess_aa {
     if (branch == null) {
       for (let i=0; i<children.length; i++) {
         let child = children[i];
-        if (this.moveEqual(move,child.root)){
+        if (this.moveEqual(move,child.move)){
           moveAlreadyMade = true;
           branch = i;
           break;
@@ -447,7 +446,7 @@ export class chess_aa {
       }
     }
     else {
-      if (this.moveEqual(move,children[branch].root)) {
+      if (this.moveEqual(move,children[branch].move)) {
         moveAlreadyMade = true;
       }
       else {

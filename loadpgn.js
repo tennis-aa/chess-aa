@@ -16,7 +16,6 @@ export function loadpgn(str) {
   let readingMove = false;
   let betweenMoves = false;
   let readingComment = false;
-  let variationDepth = 0;
   let readingResult = false;
   let readingAnnotation = false;
 
@@ -24,6 +23,7 @@ export function loadpgn(str) {
   let value = "";
   let movenumberstr = "";
   let comment = "";
+  let annotation = "";
   let movecount = [0];
   let movestr = "";
   let initialMoveNumber = -1;
@@ -107,7 +107,7 @@ export function loadpgn(str) {
       }
       else if (char==")") {
         if (movecount.length <=1) {
-          throw "improper pgn: closing parenthesis without and opening parenthesis";
+          throw "improper pgn: closing parenthesis without opening parenthesis";
         }
         let count = movecount.pop();
         for (let j=0; j<count;++j) {
@@ -126,6 +126,13 @@ export function loadpgn(str) {
       else if (/\s/.test(char)) {
         continue;
       }
+      else if (char == "$") {
+        readingAnnotation = true;
+        --i;
+      }
+      else {
+        throw ("improper pgn: found an unknown character between moves");
+      }
 
       betweenMoves = false;
     }
@@ -141,7 +148,7 @@ export function loadpgn(str) {
           --i;
         }
         else {
-          throw ("improper pgn: invalid move " + movestr);
+          throw ("improper pgn: invalid move " + movestr + " at " + chess.pgn());
         }
       }
       else if ("?!$".includes(char)) {
@@ -150,11 +157,12 @@ export function loadpgn(str) {
           tree.add(move);
           ++movecount[movecount.length - 1];
           readingAnnotation = true;
+          --i;
           readingMove = false;
           movestr = "";
         }
         else {
-          throw ("improper pgn: invalid move " + movestr);
+          throw ("improper pgn: invalid move " + movestr + " at " + chess.pgn());
         }
       }
       else {
@@ -216,8 +224,22 @@ export function loadpgn(str) {
     } 
     else if (readingAnnotation) {
       if (/\s/.test(char)) {
+        tree.addAnnotation(annotation);
+        annotation = "";
         betweenMoves = true;
         readingAnnotation = false;
+      }
+      else if (/[0-9]/.test(char) || "$?!".includes(char)) 
+        annotation += char;
+      else if (char == ")") {
+        tree.addAnnotation(annotation);
+        annotation = "";
+        --i;
+        betweenMoves = true;
+        readingAnnotation = false;
+      }
+      else {
+        throw ("improper pgn: unknown annotation characters at " + chess.pgn() + " " + char + " " + annotation);
       }
     }
     else if (readingComment) {
@@ -241,9 +263,13 @@ export function loadpgn(str) {
       if (char=="[")
         readingKey = true;
       else {
-        // start reading moves
-        readingMoveNumber = true;
-        --i;
+        // start reading moves (or comments)
+        if (char == "{")
+          readingComment = true;
+        else {
+          readingMoveNumber = true;
+          --i;
+        }
         if (header["SetUp"] == "1") {
           if (!header["FEN"])
             throw "improper pgn: if SetUp key is 1, then a FEN key is required";
@@ -263,7 +289,7 @@ export function loadpgn(str) {
       tree.add(move);
     }
     else {
-      throw ("improper pgn: invalid move " + movestr);
+      throw ("improper pgn: invalid move " + movestr + " at " + chess.pgn());
     }
   }
 

@@ -326,8 +326,9 @@ export class chess_aa {
     // the seven tag roster should be printed in order
     let output = "";
     let roster = ["Event","Site","Date","Round","White","Black","Result"];
+    let defaults = ["?","?","????.??.??","?","?","?","*"]
     for (let i=0; i<roster.length;++i) {
-        output += '[' + roster[i] + ' "' + (this.header[roster[i]] || "") + '"]\n';
+        output += '[' + roster[i] + ' "' + (this.header[roster[i]] || defaults[i]) + '"]\n';
     }
     for (let [key,value] of Object.entries(this.header)) {
       if (roster.includes(key)) continue;
@@ -343,6 +344,7 @@ export class chess_aa {
       output += this.printPGNheader();
     }
     output += this.variations.toPGN();
+    output += this.header["Result"] || "*";
     return output;
   }
 
@@ -352,6 +354,7 @@ export class chess_aa {
       output += this.printPGNheader();
     }
     output += this.variations.toPGNMain(withcomments);
+    output += this.header["Result"] || "*";
     return output;
   }
 

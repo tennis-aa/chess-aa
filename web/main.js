@@ -77,7 +77,7 @@ window.undoMove = function() {
   myChess.unmakeMove();
 }
 
-let enginecheckbox = document.getElementById("engineCheckbox")
+let enginecheckbox = document.getElementById("engineCheckbox");
 enginecheckbox.onchange = function engineSwitch(e) {
   myChessengine.switch(e.target.checked);
 };
@@ -125,4 +125,45 @@ window.printMaterial = function() {
 
 window.restartEngine = function() {
   myChessengine.launchEngine();
+}
+
+let availableMovesCheckbox = document.getElementById("available-moves");
+availableMovesCheckbox.onchange = function (e) {
+  myChess.switchAvailableMoves(e.target.checked);
+};
+
+let sound = document.getElementById("sound");
+sound.onchange = function (e) {
+  myChess.switchSound(e.target.checked);
+};
+
+let animationDuration = document.getElementById("animation-duration");
+let animationDurationValue = document.getElementById("animation-duration-value");
+animationDuration.oninput = function (e) {
+  myChess.switchAnimationDuration(animationDuration.value);
+  animationDurationValue.textContent = animationDuration.value;
+};
+
+let themeDefault = document.getElementById("theme-default");
+themeDefault.onclick = function(e) {
+  myChess.resetColors();
+};
+
+let themegray = document.getElementById("theme-gray");
+themegray.onclick = function(e) {
+  console.log("updating colors")
+  myChess.updateColors({
+    whiteSquareColor: "#DEE3E6",
+    blackSquareColor: "#8CA2AD",
+    lastMoveFromColor: "#FF8C42",
+    lastMoveToColor: "#FF8C42",
+  });
+};
+
+let settings = document.getElementById("settings");
+window.openSettings = function() {
+  settings.showModal();
+}
+window.closeSettings = function() {
+  settings.close();
 }

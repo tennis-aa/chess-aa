@@ -37,3 +37,8 @@
   overflow: auto;
   height: 50%;
 }
+
+#settings {
+  border: none;
+  border-radius: 5px
+}

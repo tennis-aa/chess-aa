@@ -151,12 +151,16 @@ themeDefault.onclick = function(e) {
 
 let themegray = document.getElementById("theme-gray");
 themegray.onclick = function(e) {
-  console.log("updating colors")
   myChess.updateColors({
     whiteSquareColor: "#DEE3E6",
     blackSquareColor: "#8CA2AD",
     lastMoveFromColor: "#FF8C42",
     lastMoveToColor: "#FF8C42",
+    arrowColor: "red",
+    highlightedSquareColor1: "blue",
+    highlightedSquareColor2: "green",
+    highlightedSquareColor3: "yellow",
+    highlightedSquareColor4: "black",
   });
 };
 

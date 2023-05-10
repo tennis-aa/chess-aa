@@ -908,7 +908,14 @@ export class chess_aa {
                 that.highlightSVG(target,that.highlightedSquareColor1);
             }
             else
-              that.arrowSVG(source,target);
+            if (e.ctrlKey)
+              that.arrowSVG(source,target,2);
+            else if (e.altKey)
+              that.arrowSVG(source,target,3);
+            else if (e.shiftKey)
+              that.arrowSVG(source,target,4);
+            else
+              that.arrowSVG(source,target,1);
           }
           document.removeEventListener("mouseup",release);
         }
@@ -956,7 +963,6 @@ export class chess_aa {
     svg.style.position = "absolute";
     svg.style.top = "0";
     svg.style.left = "0";
-    svg.style.opacity = "0.6";
     svg.style.zIndex = "2";
     svg.style.pointerEvents = "none";
     svg.setAttribute("height", "100%");
@@ -966,17 +972,32 @@ export class chess_aa {
     let defs = document.createElementNS(svgns,"defs");
     let markerdef = document.createElementNS(svgns,"marker");
     let markerPath = document.createElementNS(svgns, "path");
-    markerdef.id = "arrowhead";
+    markerdef.id = "arrowhead1";
     markerdef.setAttribute("markerWidth", "4");
     markerdef.setAttribute("markerHeight", "8");
-    markerdef.setAttribute("refX", "2.05");
-    markerdef.setAttribute("refY", "2.01");
+    markerdef.setAttribute("refX", "2");
+    markerdef.setAttribute("refY", "2");
     markerdef.setAttribute("orient", "auto");
     markerPath.setAttribute("d","M0,0 V4 L3,2 Z");
     markerPath.style.fill = this.arrowColor;
-
     markerdef.appendChild(markerPath);
-    defs.appendChild(markerdef)
+
+    let markerdef2 = markerdef.cloneNode(true);
+    markerdef2.id = "arrowhead2";
+    markerdef2.querySelector("path").style.fill = this.highlightedSquareColor1;
+
+    let markerdef3 = markerdef.cloneNode(true);
+    markerdef3.id = "arrowhead3";
+    markerdef3.querySelector("path").style.fill = this.highlightedSquareColor2;
+
+    let markerdef4 = markerdef.cloneNode(true);
+    markerdef4.id = "arrowhead4";
+    markerdef4.querySelector("path").style.fill = this.highlightedSquareColor3;
+
+    defs.appendChild(markerdef);
+    defs.appendChild(markerdef2);
+    defs.appendChild(markerdef3);
+    defs.appendChild(markerdef4);
     svg.appendChild(defs);
 
     for (let i=0; i<8; ++i) {
@@ -1004,7 +1025,7 @@ export class chess_aa {
     return svg;
   }
 
-  arrowSVG(i,j) {
+  arrowSVG(i,j,sty) {
     // delete existing arrow
     for (let k=0; k<this.arrows.length; k++) {
       let x = this.arrows[k];
@@ -1022,15 +1043,32 @@ export class chess_aa {
     
     let svgns = "http://www.w3.org/2000/svg";
     let path = document.createElementNS(svgns, "line");
-    // path.setAttribute("d", "M30,150 L100,50");
-    path.setAttribute("x1", sourcefile + 0.5);
-    path.setAttribute("y1", sourcerank + 0.5);
-    path.setAttribute("x2", targetfile + 0.5);
-    path.setAttribute("y2", targetrank + 0.5);
-    path.style.stroke = this.arrowColor;
+    let ydeviation=0;
+    if (targetrank - sourcerank > 0) ydeviation = 0.15;
+    else if (targetrank - sourcerank < 0) ydeviation = -0.15; 
+    let xdeviation=0;
+    if (targetfile - sourcefile > 0) xdeviation = 0.15;
+    else if (targetfile - sourcefile < 0) xdeviation = -0.15; 
+    path.setAttribute("x1", sourcefile + 0.5 + xdeviation);
+    path.setAttribute("y1", sourcerank + 0.5 + ydeviation);
+    // need to increase the deviation at the target because the arrow heads extend over the end of the line
+    path.setAttribute("x2", targetfile + 0.5 - xdeviation*1.2);
+    path.setAttribute("y2", targetrank + 0.5 - ydeviation*1.2);
     path.style.strokeWidth = "0.15";
-    path.style.fill = "none";
-    path.setAttribute("marker-end","url(#arrowhead)");
+    path.style.opacity = 0.6;
+    if (sty==1)
+      path.style.stroke = this.arrowColor;
+    else if (sty==2)
+      path.style.stroke = this.highlightedSquareColor1;
+    else if (sty==3)
+      path.style.stroke = this.highlightedSquareColor2;
+    else if (sty==4)
+      path.style.stroke = this.highlightedSquareColor3;
+    else {
+      console.log("unknown style for arrow");
+      return;
+    }
+    path.setAttribute("marker-end","url(#arrowhead" + sty + ")");
     this.topSVG.appendChild(path);
 
     this.arrows.push({source: i, target: j, svg: path});
@@ -1109,10 +1147,6 @@ export class chess_aa {
     this.inCheckColor = config.inCheckColor || this.inCheckColor;
     this.lastMoveFromColor = config.lastMoveFromColor || this.lastMoveFromColor;
     this.lastMoveToColor = config.lastMoveToColor || this.lastMoveToColor;
-    this.highlightedSquareColor1 = config.highlightedSquareColor1 || this.highlightedSquareColor1;
-    this.highlightedSquareColor2 = config.highlightedSquareColor2 || this.highlightedSquareColor2;
-    this.highlightedSquareColor3 = config.highlightedSquareColor3 || this.highlightedSquareColor3;
-    this.highlightedSquareColor4 = config.highlightedSquareColor4 || this.highlightedSquareColor4;
     this.clearAnnotations();
 
     if (config.whiteSquareColor || config.blackSquareColor) {
@@ -1128,10 +1162,25 @@ export class chess_aa {
     if (config.arrowColor) {
       this.arrowColor = config.arrowColor;
       // update color of arrow heads
-      this.topSVG.querySelector("defs")
-              .querySelector("marker")
-              .querySelector("path")
-              .style.fill = this.arrowColor;
+      this.topSVG.getElementById("arrowhead1").querySelector("path").style.fill = this.arrowColor;
+    }
+    if (config.highlightedSquareColor1) {
+      this.highlightedSquareColor1 = config.highlightedSquareColor1
+      // update color of arrow heads
+      this.topSVG.getElementById("arrowhead2").querySelector("path").style.fill = this.highlightedSquareColor1;
+    }
+    if (config.highlightedSquareColor2) {
+      this.highlightedSquareColor2 = config.highlightedSquareColor2
+      // update color of arrow heads
+      this.topSVG.getElementById("arrowhead3").querySelector("path").style.fill = this.highlightedSquareColor2;
+    }
+    if (config.highlightedSquareColor3) {
+      this.highlightedSquareColor3 = config.highlightedSquareColor3
+      // update color of arrow heads
+      this.topSVG.getElementById("arrowhead4").querySelector("path").style.fill = this.highlightedSquareColor3;
+    }
+    if (config.highlightedSquareColor4) {
+      this.highlightedSquareColor1 = config.highlightedSquareColor1
     }
     if (config.squarenameColor) {
       this.squarenameColor = config.squarenameColor;
@@ -1229,11 +1278,14 @@ export class chess_aa {
       this.movePiece(64+squares[i],63-squares[i]);
     }
 
-    let oldarrows = this.arrows;
-    this.arrows = new Array();
-    for (let i=0; i<oldarrows.length; ++i) {
-      oldarrows[i].svg.remove();
-      this.arrowSVG(63 - oldarrows[i].source, 63 - oldarrows[i].target);
+    for (let i=0; i<this.arrows.length; ++i) {
+      let arrow = this.arrows[i];
+      arrow.svg.setAttribute("x1", 8-arrow.svg.getAttribute("x1"));
+      arrow.svg.setAttribute("y1", 8-arrow.svg.getAttribute("y1"));
+      arrow.svg.setAttribute("x2", 8-arrow.svg.getAttribute("x2"));
+      arrow.svg.setAttribute("y2", 8-arrow.svg.getAttribute("y2"));
+      arrow.source = 63 - arrow.source;
+      arrow.target = 63 - arrow.target;
     }
 
     let cellannotations = this.bottomSVG.getElementsByClassName("chess-aa-cellannotations");

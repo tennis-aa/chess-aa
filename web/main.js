@@ -156,9 +156,9 @@ themegray.onclick = function(e) {
     blackSquareColor: "#8CA2AD",
     lastMoveFromColor: "#FF8C42",
     lastMoveToColor: "#FF8C42",
-    arrowColor: "red",
-    highlightedSquareColor1: "blue",
-    highlightedSquareColor2: "green",
+    arrowColor: "green",
+    highlightedSquareColor1: "red",
+    highlightedSquareColor2: "blue",
     highlightedSquareColor3: "yellow",
     highlightedSquareColor4: "black",
   });

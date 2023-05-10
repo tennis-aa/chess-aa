@@ -107,8 +107,7 @@ export class chess_aa {
       highlightedSquareColor2 : "#80B1D3",
       highlightedSquareColor3 : "#B3DE69",
       highlightedSquareColor4 : "#FFFFB3",
-      arrowColor : "#30c67c",
-      squarenameColor : "#000000"
+      arrowColor : "#30c67c"
     }
 
     this.whiteSquareColor = this.defaultColors.whiteSquareColor;
@@ -123,7 +122,6 @@ export class chess_aa {
     this.highlightedSquareColor3 = this.defaultColors.highlightedSquareColor3;
     this.highlightedSquareColor4 = this.defaultColors.highlightedSquareColor4;
     this.arrowColor = this.defaultColors.arrowColor;
-    this.squarenameColor = this.defaultColors.squarenameColor;
 
     // Graphical components
     this.container = document.createElement("div");
@@ -1004,18 +1002,19 @@ export class chess_aa {
       let rank = document.createElementNS(svgns, "text");
       rank.setAttribute("x", 0);
       rank.setAttribute("y", i+0.25);
-      rank.setAttribute("font-size","2%");
-      rank.style.fill = this.squarenameColor;
+      rank.setAttribute("font-size","1.7%");
+      rank.style.fill = i%2==0 ? this.blackSquareColor : this.whiteSquareColor;
       rank.style.fontFamily = "sans-serif";
       rank.textContent = 8-i;
       rank.classList.add("chess-aa-rankname");
       svg.appendChild(rank);
 
       let file = document.createElementNS(svgns, "text");
-      file.setAttribute("x", i+0.82);
+      file.setAttribute("x", i+0.99);
       file.setAttribute("y", 7.93);
-      file.setAttribute("font-size","2%");
-      file.style.fill = this.squarenameColor;
+      file.setAttribute("text-anchor","end");
+      file.setAttribute("font-size","1.7%");
+      file.style.fill = i%2==0 ? this.whiteSquareColor : this.blackSquareColor;
       file.style.fontFamily = "sans-serif";
       file.textContent = "abcdefgh"[i];
       file.classList.add("chess-aa-filename");
@@ -1158,6 +1157,13 @@ export class chess_aa {
         x[i].style.fill = this.whiteSquareColor;
         y[i].style.fill = this.blackSquareColor;
       }
+      // update color of file and rank names
+      x = this.topSVG.getElementsByClassName("chess-aa-rankname");
+      y = this.topSVG.getElementsByClassName("chess-aa-filename");
+      for (let i=0; i<x.length; ++i) {
+        x[i].style.fill = i%2==0 ? this.blackSquareColor : this.whiteSquareColor;
+        y[i].style.fill = i%2==0 ? this.whiteSquareColor : this.blackSquareColor;
+      }
     }
     if (config.arrowColor) {
       this.arrowColor = config.arrowColor;
@@ -1181,16 +1187,6 @@ export class chess_aa {
     }
     if (config.highlightedSquareColor4) {
       this.highlightedSquareColor1 = config.highlightedSquareColor1
-    }
-    if (config.squarenameColor) {
-      this.squarenameColor = config.squarenameColor;
-      // update color of file and rank names
-      let x = this.topSVG.getElementsByClassName("chess-aa-rankname");
-      let y = this.topSVG.getElementsByClassName("chess-aa-filename");
-      for (let i=0; i<x.length; ++i) {
-        x[i].style.fill = this.squarenameColor;
-        y[i].style.fill = this.squarenameColor;
-      }
     }
   }
 

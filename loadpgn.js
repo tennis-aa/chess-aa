@@ -256,8 +256,9 @@ export function loadpgn(str) {
     else if (readingResult) {
       movenumberstr += char;
       if (["1-0","0-1","1/2-1/2","*"].includes(movenumberstr)) {
-        if (movenumberstr != header["Result"]) {
-          console.log("Result header and result at end of file is not consistent");
+        if (header["Result"] && movenumberstr != header["Result"]) {
+          header["Result"] = movenumberstr;
+          console.log("Result header and result at end of file were not consistent. Header has been switched to end of the end of file result");
         }
         break;
       }

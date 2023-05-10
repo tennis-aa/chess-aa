@@ -27,7 +27,6 @@ export class chessengine {
     chess_aa.dispatcher.addEventListener("chess-aa-moveunmade", this.moveUnmade());
     chess_aa.dispatcher.addEventListener("chess-aa-newposition", this.resetPosition());
     chess_aa.dispatcher.addEventListener("chess-aa-enginemoverequest", this.searchMoveHandler());
-    chess_aa.dispatcher.addEventListener("chess-aa-movestarted", this.stopHandler());
 
     // Pause engine when window is out of focus
     this.engineOnDuringPause = false;
@@ -90,7 +89,7 @@ export class chessengine {
   }
 
   analyzePosition() {
-    this.stop;
+    this.stop();
     let command = "position fen " + this.chess.fen();
     this.uciCmd(command);
     if (this.engineOn) {

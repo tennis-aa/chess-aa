@@ -50,6 +50,9 @@ export class chess_aa {
       h7:  48, g7:  49, f7:  50, e7:  51, d7:  52, c7:  53, b7:  54, a7:  55,
       h8:  56, g8:  57, f8:  58, e8:  59, d8:  60, c8:  61, b8:  62, a8:  63
     };
+
+    // for flipping the board
+    this.whiteDown = true;
     this.squareNamesMap = this.squareNamesMapWhite;
 
     this.DEFAULTFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
@@ -58,7 +61,7 @@ export class chess_aa {
     this.chess = new Chess();
 
     // Additional logic components
-    this.startFen = this.DEFAULTFEN
+    this.startFen = this.DEFAULTFEN;
     this.variations = new moveTree();
     this.header = {};
     this.startingPieceCount = {};
@@ -92,16 +95,35 @@ export class chess_aa {
     this.pieceValue[BLACK + KING] = -100;
 
     //Colors
-    this.whiteSquareColor = "#d3ba90";
-    this.blackSquareColor = "#7c522e";
-    this.availableMovesColor = "#F1C40F";
-    this.incheckColor = "#C73030";
-    this.lastMoveFromColor = "#cca45c";
-    this.lastMoveToColor = "#ab7c2e";
-    this.selectedPieceColor = "#2274a5";
-    this.highlightedSquareColor = "#f75c03";
-    this.arrowColor = "#30c67c";
-    this.squarenameColor = "black";
+    this.defaultColors = {
+      whiteSquareColor: "#d3ba90",
+      blackSquareColor : "#7c522e",
+      selectedPieceColor : "#4DAF4A",
+      availableMovesColor : "#4DAF4A",
+      inCheckColor : "#C73030",
+      lastMoveFromColor : "#cca45c",
+      lastMoveToColor : "#cca45c",
+      highlightedSquareColor1 : "#FB8072",
+      highlightedSquareColor2 : "#80B1D3",
+      highlightedSquareColor3 : "#B3DE69",
+      highlightedSquareColor4 : "#FFFFB3",
+      arrowColor : "#30c67c",
+      squarenameColor : "#000000"
+    }
+
+    this.whiteSquareColor = this.defaultColors.whiteSquareColor;
+    this.blackSquareColor = this.defaultColors.blackSquareColor;
+    this.selectedPieceColor = this.defaultColors.selectedPieceColor;
+    this.availableMovesColor = this.defaultColors.availableMovesColor;
+    this.inCheckColor = this.defaultColors.inCheckColor;
+    this.lastMoveFromColor = this.defaultColors.lastMoveFromColor;
+    this.lastMoveToColor = this.defaultColors.lastMoveToColor;
+    this.highlightedSquareColor1 = this.defaultColors.highlightedSquareColor1;
+    this.highlightedSquareColor2 = this.defaultColors.highlightedSquareColor2;
+    this.highlightedSquareColor3 = this.defaultColors.highlightedSquareColor3;
+    this.highlightedSquareColor4 = this.defaultColors.highlightedSquareColor4;
+    this.arrowColor = this.defaultColors.arrowColor;
+    this.squarenameColor = this.defaultColors.squarenameColor;
 
     // Graphical components
     this.container = document.createElement("div");
@@ -110,74 +132,39 @@ export class chess_aa {
     this.container.style.height = "fit-content";
     this.container.style.userSelect = "none";
     this.container.tabIndex = "0"; // make the div focusable
+    this.container.style.outline = "none"; // do not show outline when focused
     this.container.onkeydown = this.keyboardCommands();
     this.container.oncontextmenu = () => false;
 
     this.chessboard = document.createElement("div");
     this.chessboard.style.height = "100%";
-    this.chessboard.style.display = "grid";
-    this.chessboard.style.gridTemplateColumns = "repeat(8,12.5%)";
-    this.chessboard.style.gridTemplateRows = "repeat(8,12.5%)";
+    this.chessboard.onmousedown = this.draw();
 
-    for (let i = 0; i < 64; i++) {
-      let div = document.createElement("div");
-      div.className = "chess-aa-square";
-      div.style.position = "relative";
-      div.onmousedown = this.draw();
-      if (i%8 == 0) {
-        let divrank = document.createElement("div");
-        divrank.className = "chess-aa-rank";
-        divrank.style.position = "absolute";
-        divrank.style.top = "0";
-        divrank.style.left = "0";
-        divrank.style.fontSize = "clamp(8px,5vmin,16px)";
-        divrank.style.fontFamily = "sans-serif";
-        divrank.style.color = this.squarenameColor;
-        divrank.style.pointerEvents = "none";
-        divrank.textContent = "87654321"[i/8];
-        div.appendChild(divrank);
-      }
-      if (i >= 56) {
-        let divfile = document.createElement("div");
-        divfile.className = "chess-aa-file";
-        divfile.style.position = "absolute";
-        divfile.style.bottom = "0";
-        divfile.style.right = "0";
-        divfile.style.fontSize = "clamp(8px,5vmin,16px)";
-        divfile.style.fontFamily = "sans-serif";
-        divfile.style.color = this.squarenameColor;
-        divfile.style.pointerEvents = "none";
-        divfile.textContent = "abcdefgh"[i-56];
-        div.appendChild(divfile);
-      }
-      this.chessboard.appendChild(div);
-    }
+    this.bottomSVG = this.createBottomSVG();
+    this.topSVG = this.createTopSVG();
 
-    this.svgcontainer = this.createSVG();
-
-    this.highlightedSquares = new Array(64).fill(false);
+    this.highlightedSquares = new Array(64).fill(null);
     this.arrows = [];
-
-    // for flipping the board
-    this.whiteDown = true;
 
     // Event dispatcher
     this.dispatcher = document.createElement("div");
 
     // initialize
-    this.colorBoardSquares();
-
     this.loadFEN(this.startFen);
 
+    this.container.appendChild(this.bottomSVG);
     this.container.appendChild(this.chessboard);
-    this.container.appendChild(this.svgcontainer);
+    this.container.appendChild(this.topSVG);
     main_div.appendChild(this.container);
 
     // piece animation
     this.animationDuration = 100; //ms
 
     //audio
+    this.audioContext = new AudioContext();
     this.piecemoveAudio = new Audio(new URL("mixkit-modern-click-box-check-1120_trim.wav", import.meta.url));
+    const track = this.audioContext.createMediaElementSource(this.piecemoveAudio);
+    track.connect(this.audioContext.destination);
     this.soundOn = false;
 
     // Settings
@@ -238,18 +225,31 @@ export class chess_aa {
     if (!piece) return;
     let img = document.createElement("img");
     img.className = "chess-aa-piece";
-    let elem = this.chessboard.children[square];
     img.style.position = "absolute";
     img.style.top = "0";
     img.style.left = "0";
-    img.style.width = "100%";
+    img.style.width = "12.5%";
     img.style.zIndex = "1";
     img.style.cursor = "grab";
+    let x = (square % 8) * 100;
+    let y = Math.floor(square/8) * 100;
+    img.style.transform = "translate(" + x + "% ," + y + "%)";
+    img.dataset.square = square;
     img.src = this.pieceSVGsrc(piece.color, piece.type);
     img.addEventListener("mousedown", this.drag(), false);
     img.addEventListener("touchstart", this.drag(), false);
     img.ondragstart = () => false;
-    elem.appendChild(img);
+    this.chessboard.appendChild(img);
+  }
+
+  movePiece(source,target) {
+    let img = this.chessboard.querySelector('[data-square="' + source + '"]');
+    if (img) {
+      let x = (target % 8) * 100;
+      let y = Math.floor(target/8) * 100;
+      img.style.transform = "translate(" + x + "% ," + y + "%)";
+      img.dataset.square = target;
+    }
   }
 
   loadFEN(fen = this.DEFAULTFEN, quiet=false) {
@@ -263,7 +263,7 @@ export class chess_aa {
     this.clearAnnotations();
     this.startFen = fen;
     this.resetPieceCount();
-    let pieces = this.chessboard.getElementsByClassName("chess-aa-piece");
+    let pieces = this.chessboard.querySelectorAll("[data-square]");
     for (let i = pieces.length-1; i>=0; i--){
       let piece = pieces[i];
       piece.remove();
@@ -369,32 +369,65 @@ export class chess_aa {
     return null;
   }
 
+  async displayMove(source,target,animate) {
+    this.movePiece(source,target);
+    if (animate && this.animationDuration > 0) {
+      let img = this.chessboard.querySelector('[data-square="' + target + '"]');
+      let xstart = (source % 8) * 100;
+      let xend = (target % 8) * 100;
+      let ystart = Math.floor(source/8) * 100;
+      let yend = Math.floor(target/8) * 100;
+      img.style.transform = "translate(" + xstart + "%, " + ystart + "%)";
+      let start;
+      let that = this;
+      function step(timestamp) {
+        if (start === undefined) start = timestamp;
+        let elapsed = timestamp - start;
+        if (elapsed < that.animationDuration) {
+          img.style.transform = "translate(" + (xstart + (xend - xstart)*elapsed/that.animationDuration) + "%, " +
+                  (ystart + (yend - ystart)*(elapsed)/that.animationDuration) + "%)";
+          window.requestAnimationFrame(step);
+        }
+        else {
+          img.style.transform = "translate(" + xend + "%, " + yend + "%)";
+          if (that.soundOn) that.piecemoveAudio.play();
+          promiseResolve();
+        }
+      }
+      let promiseResolve;
+      await new Promise(resolve => {
+        promiseResolve = resolve;
+        window.requestAnimationFrame(step);
+      });
+    }
+  }
+
   makeMove(move,animate=false,forceNewVariation=false,branch=null) {
     if (!move) return false;
     move = this.chess.move(move);
     if (!move) return false;
-
-    let event = new Event("chess-aa-movestarted");
-    this.dispatcher.dispatchEvent(event);
 
     if (move.captured) {
       --this.pieceCount[this.chess.turn() + move.captured]
     }
     let source = this.squareNamesMap[move.from];
     let target =  this.squareNamesMap[move.to];
-    let imageSource = this.chessboard.children[source].getElementsByClassName("chess-aa-piece")[0];
+    let imageSource = this.chessboard.querySelector('[data-square="' + source + '"]');
 
     let rookSource;
     let rookTarget;
-    let rookImage;
     let imageTarget;
     switch(move.flags){
       case "n": break;
       case "b": break;
       case "e":
-        let ep_square = target + (this.chess.turn() == BLACK ? 8 : -8);
-        let ep_image = this.chessboard.children[ep_square].getElementsByClassName("chess-aa-piece")[0];
-        this.chessboard.children[ep_square].removeChild(ep_image);
+        let ep_square;
+        if ((this.chess.turn() == WHITE && this.whiteDown) || (this.chess.turn() == BLACK && !this.whiteDown))
+          ep_square = target - 8;
+        else
+          ep_square = target + 8;
+        let ep_image = this.chessboard.querySelector('[data-square="' + ep_square + '"]');
+        this.chessboard.removeChild(ep_image);
         break;
       case "k":
         if (this.chess.turn() == BLACK) {
@@ -405,8 +438,7 @@ export class chess_aa {
           rookSource = this.squareNamesMap["h8"];
           rookTarget = this.squareNamesMap["f8"];
         }
-        rookImage = this.chessboard.children[rookSource].getElementsByClassName("chess-aa-piece")[0];
-        this.chessboard.children[rookTarget].appendChild(rookImage);
+        this.movePiece(rookSource, rookTarget);
         break;
       case "q":
         if (this.chess.turn() == BLACK) {
@@ -417,13 +449,12 @@ export class chess_aa {
           rookSource = this.squareNamesMap["a8"];
           rookTarget = this.squareNamesMap["d8"];
         }
-        rookImage = this.chessboard.children[rookSource].getElementsByClassName("chess-aa-piece")[0];
-        this.chessboard.children[rookTarget].appendChild(rookImage);
+        this.movePiece(rookSource, rookTarget);
         break;
       case "pc":
       case "cp":
-        imageTarget = this.chessboard.children[target].getElementsByClassName("chess-aa-piece")[0];
-        this.chessboard.children[target].removeChild(imageTarget);
+        imageTarget = this.chessboard.querySelector('[data-square="' + target + '"]');
+        this.chessboard.removeChild(imageTarget);
         // Continue to promotion
       case "p":
       case "np":
@@ -431,8 +462,8 @@ export class chess_aa {
         imageSource.src = this.pieceSVGsrc(this.chess.turn() == WHITE ? BLACK : WHITE, move.promotion);
         break;
       case "c":
-        imageTarget = this.chessboard.children[target].getElementsByClassName("chess-aa-piece")[0];
-        this.chessboard.children[target].removeChild(imageTarget);
+        imageTarget = this.chessboard.querySelector('[data-square="' + target + '"]');
+        this.chessboard.removeChild(imageTarget);
         break;
     }
 
@@ -468,39 +499,10 @@ export class chess_aa {
     let fen = this.chess.fen();
 
     // display move
-    this.chessboard.children[target].appendChild(imageSource);
-    if (this.soundOn) this.piecemoveAudio.cloneNode().play();
-    // animate move
-    if (animate) {
-      let unit = this.chessboard.children[0].offsetWidth;
-      let ydiff = -this.rankIndex(source) + this.rankIndex(target);
-      let xdiff = this.fileIndex(source) - this.fileIndex(target);
-      imageSource.style.top = ydiff*unit + "px";
-      imageSource.style.left = xdiff*unit + "px";
-      let start;
-      let duration = this.animationDuration;
-      let that = this;
-      function step(timestamp) {
-        if (start === undefined) start = timestamp;
-        let elapsed = timestamp - start;
-        if (elapsed < duration) {
-        imageSource.style.top = ydiff*(duration-elapsed)/duration*unit + "px";
-        imageSource.style.left = xdiff*(duration-elapsed)/duration*unit + "px";
-        window.requestAnimationFrame(step);
-        }
-        else {
-          imageSource.style.top = 0;
-          imageSource.style.left = 0;
-          let event = new CustomEvent("chess-aa-movemade", { detail: { move:move, address:address, fen:fen } });
-          that.dispatcher.dispatchEvent(event);
-        }
-      }
-      window.requestAnimationFrame(step);
-    }
-    else {
-      let event = new CustomEvent("chess-aa-movemade", { detail: { move:move, address:address, fen:fen } });
-      this.dispatcher.dispatchEvent(event);
-    }
+    this.displayMove(source,target,animate);
+
+    let event = new CustomEvent("chess-aa-movemade", { detail: { move:move, address:address, fen:fen } });
+    this.dispatcher.dispatchEvent(event);
 
     // Ask engine for a move
     if (this.mode == "play" && this.player != this.chess.turn()) {
@@ -532,9 +534,6 @@ export class chess_aa {
   unmakeMove(animate=false) {
     let move = this.chess.undo()
     if (move) {
-      let event = new Event("chess-aa-movestarted");
-      this.dispatcher.dispatchEvent(event);
-
       if (move.captured) {
         ++this.pieceCount[(this.chess.turn() == WHITE ? BLACK : WHITE) + move.captured]
       }
@@ -546,16 +545,19 @@ export class chess_aa {
 
       let source = this.squareNamesMap[move.from];
       let target = this.squareNamesMap[move.to];
-      let img = this.chessboard.children[target].getElementsByClassName("chess-aa-piece")[0];
+      let img = this.chessboard.querySelector('[data-square="' + target + '"]');
 
       let rookSource;
       let rookTarget;
-      let rookImage;
       switch(move.flags) {
         case "n": break;
         case "b": break;
         case "e":
-          let ep_square = target + (this.chess.turn() == WHITE ? 8 : -8);
+          let ep_square;
+          if ((this.chess.turn() == WHITE && this.whiteDown) || (this.chess.turn() == BLACK && !this.whiteDown))
+            ep_square = target + 8;
+          else
+            ep_square = target - 8;
           this.newPiece(this.chess.get(this.squareNames[ep_square]), ep_square);
           break;
         case "k":
@@ -567,8 +569,7 @@ export class chess_aa {
             rookTarget = this.squareNamesMap["h8"];
             rookSource = this.squareNamesMap["f8"];
           }
-          rookImage = this.chessboard.children[rookSource].getElementsByClassName("chess-aa-piece")[0];
-          this.chessboard.children[rookTarget].appendChild(rookImage);
+          this.movePiece(rookSource,rookTarget);
           break;
         case "q":
           if (this.chess.turn() == WHITE) {
@@ -579,8 +580,7 @@ export class chess_aa {
             rookTarget = this.squareNamesMap["a8"];
             rookSource = this.squareNamesMap["d8"];
           }
-          rookImage = this.chessboard.children[rookSource].getElementsByClassName("chess-aa-piece")[0];
-          this.chessboard.children[rookTarget].appendChild(rookImage);
+          this.movePiece(rookSource,rookTarget);
           break;
         case "pc":
         case "cp":
@@ -595,40 +595,10 @@ export class chess_aa {
           }
       }
       // display move
-      this.chessboard.children[source].appendChild(img);
+      this.displayMove(target, source, animate);
       this.newPiece(this.chess.get(this.squareNames[target]), target);
-      if (this.soundOn) this.piecemoveAudio.cloneNode().play();
-      // animate move
-      if (animate) {
-        let unit = this.chessboard.children[0].offsetWidth;
-        let ydiff = this.rankIndex(source) - this.rankIndex(target);
-        let xdiff = -this.fileIndex(source) + this.fileIndex(target);
-        img.style.top = ydiff*unit + "px";
-        img.style.left = xdiff*unit + "px";
-        let start;
-        let duration = this.animationDuration;
-        let that = this;
-        function step(timestamp) {
-          if (start === undefined) start = timestamp;
-          let elapsed = timestamp - start;
-          if (elapsed < duration) {
-          img.style.top = ydiff*(duration-elapsed)/duration*unit + "px";
-          img.style.left = xdiff*(duration-elapsed)/duration*unit + "px";
-          window.requestAnimationFrame(step);
-          }
-          else {
-            img.style.top = 0;
-            img.style.left = 0;
-            let event = new CustomEvent("chess-aa-moveunmade", { detail: { move:move, address:address, fen:fen } });
-            that.dispatcher.dispatchEvent(event);
-          }
-        }
-        window.requestAnimationFrame(step);
-      }
-      else {
-        let event = new CustomEvent("chess-aa-moveunmade", { detail: { move:move, address:address, fen:fen } });
-        this.dispatcher.dispatchEvent(event);
-      }
+      let event = new CustomEvent("chess-aa-moveunmade", { detail: { move:move, address:address, fen:fen } });
+      this.dispatcher.dispatchEvent(event);
     }
   }
 
@@ -681,6 +651,7 @@ export class chess_aa {
     }
     else {
       animate = false;
+      if (this.soundOn) this.piecemoveAudio.play();
     }
 
     // unmake moves that are not common
@@ -769,19 +740,6 @@ export class chess_aa {
     return this.variations.getComments();
   }
 
-  colorBoardSquares() {
-    for (let i = 0; i < 64; i++){
-      let div = this.chessboard.children[i];
-      this.highlightedSquares[i] = false;
-      if((this.rankIndex(i)+this.fileIndex(i)) % 2 != 0){
-        div.style.backgroundColor = this.whiteSquareColor;
-      }
-      else {
-        div.style.backgroundColor = this.blackSquareColor;
-      }
-    }
-  }
-
   drag() {
     let that = this;
     return function(event) {
@@ -791,18 +749,17 @@ export class chess_aa {
         if (that.chess.game_over() || (that.mode == "play" && that.player != that.chess.turn())) {
           return;
         }
-        img.parentElement.style.backgroundColor = that.selectedPieceColor;;
-        let source = Array.from(that.chessboard.children).indexOf(img.parentElement);
+        let source = img.dataset.square;
+        that.cellAnnotations(source,"selectedPiece");
 
         if(that.showAvailableMoves) {
           let availableMoves = that.chess.moves({verbose: true, square: that.squareNames[source]})
           for (let i=0; i<availableMoves.length; i++) {
             let move = availableMoves[i];
-            that.chessboard.children[that.squareNamesMap[move.to]].style.backgroundColor = that.availableMovesColor;
+            that.cellAnnotations(that.squareNamesMap[move.to],"availableMoves")
           }
         }
 
-        img.style.width = img.offsetWidth + "px";
         img.style.zIndex = 1000;
         img.style.cursor = "grabbing";
 
@@ -810,8 +767,9 @@ export class chess_aa {
         // taking initial shifts into account
         let rect = img.parentElement.getBoundingClientRect();
         function moveAt(clientX, clientY) {
-          img.style.left = clientX - rect.left - img.offsetWidth / 2 + 'px';
-          img.style.top = clientY - rect.top - img.offsetHeight / 2 + 'px';
+          let x = clientX - rect.left - img.offsetWidth / 2 + 'px';
+          let y = clientY - rect.top - img.offsetHeight / 2 + 'px';
+          img.style.transform = "translate(" + x + ", " + y + ")";
         }
 
         let left = event.clientX || event.targetTouches[0].clientX;
@@ -835,30 +793,22 @@ export class chess_aa {
           document.removeEventListener("touchmove", onMouseMove);
           img.removeEventListener("mouseup", release);
           img.removeEventListener("touchend", release);
+          img.style.zIndex = "1";
+          img.style.cursor = "grab";
 
-          img.hidden = true;
-          let elemBelow = document.elementFromPoint(left, top);
-          img.hidden = false;
+          let target = Math.floor((left-rect.left)/that.chessboard.offsetWidth*8) + Math.floor((top-rect.top)/that.chessboard.offsetHeight*8)*8;
 
-          let target;
-          if (elemBelow.parentElement === that.chessboard){
-            target = Array.from(that.chessboard.children).indexOf(elemBelow);
-          }
-          else if (elemBelow.parentElement.parentElement === that.chessboard){
-            let squareelem = elemBelow.parentElement;
-            target = Array.from(that.chessboard.children).indexOf(squareelem);
-          }
           let move = that.possibleMove(source,target);
           if (move && that.isPromotion(move.flags)){
             that.selectPromotionPiece(move, img);
           }
           else {
-            that.makeMove(move);
-            img.style.top = "0";
-            img.style.left = "0";
-            img.style.zIndex = "1";
-            img.style.width = "100%";
-            img.style.cursor = "grab";
+            if (move) {
+              that.makeMove(move);
+              if (that.soundOn) that.piecemoveAudio.play();
+            }
+            else
+              that.movePiece(source,source);
             that.clearAnnotations();
           }
         }
@@ -871,34 +821,31 @@ export class chess_aa {
 
   selectPromotionPiece(move, img) {
     let that = this;
+    let source = this.squareNamesMap[move.from];
     let target = this.squareNamesMap[move.to];
     let div = document.createElement("div");
     div.style.backgroundColor = "#d3d3d3";
     div.style.position = "absolute";
     div.style.zIndex = "1001";
     div.style.margin = "0";
-    div.style.width = "100%";
-    div.style.height = "400%";
+    div.style.width = "12.5%";
+    div.style.height = "50%";
     div.style.cursor = "pointer";
+    div.style.left = ((target % 8)*100/8) + "%";
     if (target < 8) { //queening on top of screen 
       div.style.top = "0";
     }
     else { //queening on bottom of screen 
-      div.style.top = "-300%";
+      div.style.top = "50%";
     }
-    this.chessboard.children[target].appendChild(div);
+    this.chessboard.appendChild(div);
     function closeDiv(event) {
       document.removeEventListener("mousedown",closeDiv);
       let rect = div.getBoundingClientRect();
       let isInDiv=(rect.top <= event.clientY && event.clientY <= rect.top + rect.height
         && rect.left <= event.clientX && event.clientX <= rect.left + rect.width);
       if (!isInDiv) {
-        img.style.top = "0";
-        img.style.left = "0";
-        img.style.zIndex = "1";
-        img.style.width = "100%";
-        img.style.cursor = "grab";
-        that.clearAnnotations();
+        that.movePiece(source,source);
         div.remove();
       }
     }
@@ -911,13 +858,10 @@ export class chess_aa {
         let move2 = that.chess.move(move);
         that.chess.undo();
         that.makeMove(move2);
-        img.style.top = "0";
-        img.style.left = "0";
-        img.style.zIndex = "1";
-        img.style.width = "100%";
         that.clearAnnotations();
         div.remove();
         that.container.focus();
+        if (that.soundOn) that.piecemoveAudio.play();
       }
     };
 
@@ -944,55 +888,69 @@ export class chess_aa {
     let that = this;
     return function(event) {
       if (event.button == 2) {
-        let square = event.currentTarget;
-        let source = Array.from(that.chessboard.children).indexOf(square);
+        let rect = that.chessboard.getBoundingClientRect();
+        let source = Math.floor((event.clientX-rect.left)/that.chessboard.offsetWidth*8) + Math.floor((event.clientY-rect.top)/that.chessboard.offsetHeight*8)*8;
 
-        // transparent div to help with dragging functionality
-        let img = document.createElement("div");
-        document.body.appendChild(img);
-        img.style.width = window.innerWidth + "px";
-        img.style.height = window.innerHeight + "px";
-        img.style.position = 'absolute';
-        img.style.top = 0;
-        img.style.left = 0;
-        img.style.zIndex = 1000;
-
-        img.onmouseup = function(event) {
-          img.remove();
-
-          let elemBelow = document.elementFromPoint(event.clientX, event.clientY);
+        let release = function(e) {
+          let x = Math.floor((e.clientX-rect.left)/that.chessboard.offsetWidth*8);
+          let y = Math.floor((e.clientY-rect.top)/that.chessboard.offsetHeight*8);
           let target;
-          if (elemBelow.parentElement === that.chessboard){
-            target = Array.from(that.chessboard.children).indexOf(elemBelow);
-          }
-          else if (elemBelow.parentElement.parentElement === that.chessboard){
-            let squareelem = elemBelow.parentElement;
-            target = Array.from(that.chessboard.children).indexOf(squareelem);
-          }
-          if (target != null && target == source) {
-            if (that.highlightedSquares[source]) {
-              that.highlightedSquares[source] = false;
-              if((that.rankIndex(source)+that.fileIndex(source)) % 2 != 0){
-                square.style.backgroundColor = that.whiteSquareColor;
-              }
-              else {
-                square.style.backgroundColor = that.blackSquareColor;
-              }
+          if (x >= 0 && x < 8 && y >= 0 && y < 8) {
+            target = y * 8 + x;
+            if (target == source) {
+              if (e.ctrlKey)
+                that.highlightSVG(target,that.highlightedSquareColor2);
+              else if (e.altKey)
+                that.highlightSVG(target,that.highlightedSquareColor3);
+              else if (e.shiftKey)
+                that.highlightSVG(target,that.highlightedSquareColor4);
+              else
+                that.highlightSVG(target,that.highlightedSquareColor1);
             }
-            else {
-              that.highlightedSquares[source] = true;
-              square.style.backgroundColor = that.highlightedSquareColor;
-            }
+            else
+              that.arrowSVG(source,target);
           }
-          else if (target != null && target >=0 && target < 64) {
-            that.arrowSVG(source,target);
-          }
+          document.removeEventListener("mouseup",release);
         }
+        document.addEventListener("mouseup",release);
       }
     };
   }
 
-  createSVG() {
+  createBottomSVG() {
+    let svgns = "http://www.w3.org/2000/svg";
+    let svg = document.createElementNS(svgns,"svg");
+    svg.style.position = "absolute";
+    svg.style.top = "0";
+    svg.style.left = "0";
+    svg.style.pointerEvents = "none";
+    svg.setAttribute("height", "100%");
+    svg.setAttribute("apect-ratio", "1/1");
+    svg.setAttribute("viewBox", "0 0 8 8");
+
+    for (let i=0; i<8; ++i) {
+      for (let j=0; j<8; ++j) {
+        let path = document.createElementNS(svgns, "rect");
+        path.setAttribute("x", i);
+        path.setAttribute("y", j);
+        path.setAttribute("width", 1);
+        path.setAttribute("height", 1);
+        path.style.strokeWidth = "0";
+        if ((i+j) % 2 == 0) {
+          path.style.fill = this.whiteSquareColor;
+          path.dataset.color = "white";
+        }
+        else {
+          path.style.fill = this.blackSquareColor;
+          path.dataset.color = "black";
+        }
+        svg.appendChild(path);
+      }
+    }
+    return svg;
+  }
+
+  createTopSVG() {
     let svgns = "http://www.w3.org/2000/svg";
     let svg = document.createElementNS(svgns,"svg");
     svg.style.position = "absolute";
@@ -1020,6 +978,29 @@ export class chess_aa {
     markerdef.appendChild(markerPath);
     defs.appendChild(markerdef)
     svg.appendChild(defs);
+
+    for (let i=0; i<8; ++i) {
+      let rank = document.createElementNS(svgns, "text");
+      rank.setAttribute("x", 0);
+      rank.setAttribute("y", i+0.25);
+      rank.setAttribute("font-size","2%");
+      rank.style.fill = this.squarenameColor;
+      rank.style.fontFamily = "sans-serif";
+      rank.textContent = 8-i;
+      rank.classList.add("chess-aa-rankname");
+      svg.appendChild(rank);
+
+      let file = document.createElementNS(svgns, "text");
+      file.setAttribute("x", i+0.82);
+      file.setAttribute("y", 7.93);
+      file.setAttribute("font-size","2%");
+      file.style.fill = this.squarenameColor;
+      file.style.fontFamily = "sans-serif";
+      file.textContent = "abcdefgh"[i];
+      file.classList.add("chess-aa-filename");
+      svg.appendChild(file);
+    }
+
     return svg;
   }
 
@@ -1050,23 +1031,147 @@ export class chess_aa {
     path.style.strokeWidth = "0.15";
     path.style.fill = "none";
     path.setAttribute("marker-end","url(#arrowhead)");
-    this.svgcontainer.appendChild(path);
+    this.topSVG.appendChild(path);
 
     this.arrows.push({source: i, target: j, svg: path});
   }
 
+  highlightSVG(i,color) {
+    // delete existing highlights
+    let x = this.highlightedSquares[i];
+    if (x) {
+      x.remove();
+      this.highlightedSquares[i] = null;
+      return;
+    }
+
+    let sourcerank = Math.floor(i/8);
+    let sourcefile = i % 8;
+    
+    let svgns = "http://www.w3.org/2000/svg";
+    let path = document.createElementNS(svgns, "rect");
+    path.setAttribute("x", sourcefile);
+    path.setAttribute("y", sourcerank);
+    path.setAttribute("width", 1);
+    path.setAttribute("height", 1);
+    path.style.strokeWidth = "0";
+    path.style.fill = color;
+    path.style.opacity = 0.8;
+    this.bottomSVG.appendChild(path);
+
+    this.highlightedSquares[i] = path;
+  }
+
+  cellAnnotations(i, type) {
+    let sourcerank = Math.floor(i/8);
+    let sourcefile = i % 8;
+    
+    let svgns = "http://www.w3.org/2000/svg";
+    let path = document.createElementNS(svgns, "rect");
+    path.setAttribute("x", sourcefile);
+    path.setAttribute("y", sourcerank);
+    path.setAttribute("width", 1);
+    path.setAttribute("height", 1);
+    path.classList.add("chess-aa-cellannotations");
+    path.style.opacity = 0.7;
+    switch (type) {
+      case "lastMoveFrom":
+        path.style.strokeWidth = "0";
+        path.style.fill = this.lastMoveFromColor;
+        break;
+      case "lastMoveTo":
+        path.style.strokeWidth = "0";
+        path.style.fill = this.lastMoveToColor;
+        break;
+      case "selectedPiece":
+        path.style.strokeWidth = "0";
+        path.style.fill = this.selectedPieceColor;
+        break;
+      case "inCheck":
+        path.style.strokeWidth = "0";
+        path.style.fill = this.inCheckColor;
+        break;
+      case "availableMoves":
+        path.style.opacity = "1";
+        path.style.strokeWidth = "0.05";
+        path.style.stroke = this.availableMovesColor;
+        path.style.fill = "none";
+        break;
+      default:
+        console.log("unknown cell annotation type:",type);
+    }
+    this.bottomSVG.appendChild(path);
+  }
+
+  updateColors(config) {
+    this.selectedPieceColor = config.selectedPieceColor || this.selectedPieceColor;
+    this.availableMovesColor = config.availableMovesColor || this.availableMovesColor;
+    this.inCheckColor = config.inCheckColor || this.inCheckColor;
+    this.lastMoveFromColor = config.lastMoveFromColor || this.lastMoveFromColor;
+    this.lastMoveToColor = config.lastMoveToColor || this.lastMoveToColor;
+    this.highlightedSquareColor1 = config.highlightedSquareColor1 || this.highlightedSquareColor1;
+    this.highlightedSquareColor2 = config.highlightedSquareColor2 || this.highlightedSquareColor2;
+    this.highlightedSquareColor3 = config.highlightedSquareColor3 || this.highlightedSquareColor3;
+    this.highlightedSquareColor4 = config.highlightedSquareColor4 || this.highlightedSquareColor4;
+    this.clearAnnotations();
+
+    if (config.whiteSquareColor || config.blackSquareColor) {
+      this.whiteSquareColor = config.whiteSquareColor || this.whiteSquareColor;
+      this.blackSquareColor = config.blackSquareColor || this.blackSquareColor;
+      let x = this.bottomSVG.querySelectorAll('[data-color="white"]');
+      let y = this.bottomSVG.querySelectorAll('[data-color="black"]');
+      for (let i=0; i<x.length; ++i) {
+        x[i].style.fill = this.whiteSquareColor;
+        y[i].style.fill = this.blackSquareColor;
+      }
+    }
+    if (config.arrowColor) {
+      this.arrowColor = config.arrowColor;
+      // update color of arrow heads
+      this.topSVG.querySelector("defs")
+              .querySelector("marker")
+              .querySelector("path")
+              .style.fill = this.arrowColor;
+    }
+    if (config.squarenameColor) {
+      this.squarenameColor = config.squarenameColor;
+      // update color of file and rank names
+      let x = this.topSVG.getElementsByClassName("chess-aa-rankname");
+      let y = this.topSVG.getElementsByClassName("chess-aa-filename");
+      for (let i=0; i<x.length; ++i) {
+        x[i].style.fill = this.squarenameColor;
+        y[i].style.fill = this.squarenameColor;
+      }
+    }
+  }
+
+  resetColors() {
+    this.updateColors(this.defaultColors);
+  }
+
   clearAnnotations() {
-    this.colorBoardSquares();
     for (let i=this.arrows.length-1; i>=0; i--) {
       this.arrows[i].svg.remove();
       this.arrows.splice(i,1);
     }
 
+    for (let i=0; i < this.highlightedSquares.length; ++i) {
+      if (this.highlightedSquares[i]) {
+        this.highlightedSquares[i].remove();
+        this.highlightedSquares[i] = null;
+      }
+    }
+
+    let annotations = this.bottomSVG.getElementsByClassName("chess-aa-cellannotations");
+    for (let i=annotations.length-1; i>=0; --i) {
+      annotations[i].remove();
+    }
+
     let move = this.chess.undo();
     if (move) {
       this.chess.move(move);
-      this.chessboard.children[this.squareNamesMap[move.from]].style.backgroundColor = this.lastMoveFromColor;
-      this.chessboard.children[this.squareNamesMap[move.to]].style.backgroundColor = this.lastMoveToColor;
+      this.cellAnnotations(this.squareNamesMap[move.from],"lastMoveFrom");
+      this.cellAnnotations(this.squareNamesMap[move.to],"lastMoveTo");
     }
 
     if (this.chess.in_check()) {
@@ -1074,7 +1179,7 @@ export class chess_aa {
         let piece = this.chess.get(this.squareNames[i]);
         let color = this.chess.turn();
         if (piece && piece.type == KING && piece.color == color) {
-          this.chessboard.children[i].style.backgroundColor = this.incheckColor;
+          this.cellAnnotations(i,"inCheck");
         }
       }
     }
@@ -1093,24 +1198,12 @@ export class chess_aa {
     }
     this.whiteDown = !this.whiteDown;
 
-    for (let i = 0; i < 64; i++) {
-      let div = this.chessboard.children[63-i];
-      this.chessboard.append(div);
-    }
-
-    // Flip ranks
-    for (let i=0; i<8; ++i) {
-      let div1 = this.chessboard.children[8*i+7];
-      let div2 = this.chessboard.children[8*i];
-      let divrank = div1.getElementsByClassName("chess-aa-rank");
-      div2.appendChild(divrank[0]);
-    }
-    // Flip files
-    for (let i=0; i<8; ++i) {
-      let div1 = this.chessboard.children[i];
-      let div2 = this.chessboard.children[56+i];
-      let divfile = div1.getElementsByClassName("chess-aa-file");
-      div2.appendChild(divfile[0]);
+    // Flip ranks and files
+    let ranks = this.topSVG.getElementsByClassName("chess-aa-rankname")
+    let files = this.topSVG.getElementsByClassName("chess-aa-filename")
+    for (let i=0; i<ranks.length; ++i) {
+      ranks[i].textContent = this.whiteDown ? 8-i : i+1;
+      files[i].textContent = "abcdefgh"[(this.whiteDown ? i : 7-i)];
     }
 
     this.squareNames.reverse();
@@ -1122,11 +1215,43 @@ export class chess_aa {
       this.squareNamesMap = this.squareNamesMapWhite;
     }
 
+    // flipping the pieces
+    // Placing pieces on top of each other does not allow movePiece to know which piece to select
+    // To avoid the conflicts, we first change the data-square of all pieces to a place outside the board
+    // and then we actually move them to the correct square 
+    let pieces = this.chessboard.querySelectorAll("[data-square]");
+    let squares = new Array(pieces.length);
+    for (let i=0; i<pieces.length; ++i) {
+      squares[i] = pieces[i].dataset.square;
+      pieces[i].dataset.square = 64 + squares[i];
+    }
+    for (let i=0; i<pieces.length; ++i) {
+      this.movePiece(64+squares[i],63-squares[i]);
+    }
+
     let oldarrows = this.arrows;
     this.arrows = new Array();
     for (let i=0; i<oldarrows.length; ++i) {
       oldarrows[i].svg.remove();
       this.arrowSVG(63 - oldarrows[i].source, 63 - oldarrows[i].target);
+    }
+
+    let cellannotations = this.bottomSVG.getElementsByClassName("chess-aa-cellannotations");
+    for (let i=0; i<cellannotations.length; ++i) {
+      cellannotations[i].setAttribute("x", 7-cellannotations[i].getAttribute("x"));
+      cellannotations[i].setAttribute("y", 7-cellannotations[i].getAttribute("y"));
+    }
+
+    let hs = this.highlightedSquares.slice();
+    for (let i=0; i<hs.length; ++i) {
+      if (hs[i]) {
+        hs[i].setAttribute("x", 7-hs[i].getAttribute("x"));
+        hs[i].setAttribute("y", 7-hs[i].getAttribute("y"));
+        this.highlightedSquares[63-i] = hs[i];
+      }
+      else {
+        this.highlightedSquares[63-i] = null
+      }
     }
 
     let event = new CustomEvent("chess-aa-flipboard",{detail:{whiteDown: this.whiteDown}});
@@ -1165,5 +1290,20 @@ export class chess_aa {
 
   focus() {
     this.container.focus();
+  }
+
+  switchAvailableMoves(onoff) {
+    this.showAvailableMoves = onoff;
+  }
+
+  switchSound(onoff) {
+    if (onoff && this.audioContext.state === "suspended") {
+      this.audioContext.resume();
+    }
+    this.soundOn = onoff;
+  }
+
+  switchAnimationDuration(ms) {
+    this.animationDuration = ms;
   }
 }

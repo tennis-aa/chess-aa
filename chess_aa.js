@@ -159,11 +159,9 @@ export class chess_aa {
     this.animationDuration = 100; //ms
 
     //audio
-    this.audioContext = new AudioContext();
-    this.piecemoveAudio = new Audio(new URL("mixkit-modern-click-box-check-1120_trim.wav", import.meta.url));
-    const track = this.audioContext.createMediaElementSource(this.piecemoveAudio);
-    track.connect(this.audioContext.destination);
     this.soundOn = false;
+    this.audioContext = null;
+    this.piecemoveAudio = new Audio(new URL("mixkit-modern-click-box-check-1120_trim.wav", import.meta.url));
 
     // Settings
     this.showAvailableMoves = true;
@@ -1345,10 +1343,17 @@ export class chess_aa {
   }
 
   switchSound(onoff) {
-    if (onoff && this.audioContext.state === "suspended") {
-      this.audioContext.resume();
+    if (onoff == this.soundOn) return;
+    if (onoff) {
+      this.soundOn = true;
+      this.audioContext = new AudioContext();
+      let track = this.audioContext.createMediaElementSource(this.piecemoveAudio);
+      track.connect(this.audioContext.destination);
     }
-    this.soundOn = onoff;
+    else {
+      this.soundOn = false;
+      this.audioContext.close();
+    }
   }
 
   switchAnimationDuration(ms) {

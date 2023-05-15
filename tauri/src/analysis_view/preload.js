@@ -4,6 +4,7 @@ const invoke = window.__TAURI__.invoke;
 window.engineAPI = {
   uciCmd: (data) => invoke("uci_cmd", {command: data}),
   engineLaunch: () => {invoke("launch_engine")},
+  engineTerminate: () => {invoke("terminate_engine")},
   engineOnMessage: (callback) => listen("engine-output", (event) => callback(null,event.payload)),
   engineOnSwitch: (callback) => listen("engine-switch", (event) => callback())
 };

@@ -37,9 +37,14 @@ ipcMain.on("engine-launch", (event) => {
   launchEngine(event.sender);
 });
 
+ipcMain.on("engine-terminate", (event) => {
+  if (engine)
+    engine.kill("SIGINT");
+});
+
 // register engine
 function search_engine_to_register(menu_item, browserwindow, event) {
-  let path = dialog.showOpenDialogSync(browserwindow,{properties: ["openfile"]})
+  let path = dialog.showOpenDialogSync(browserwindow,{properties: ["openfile"]});
   if (path) {
     test_engine(path[0], browserwindow);
   }

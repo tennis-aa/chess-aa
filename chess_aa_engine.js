@@ -4,35 +4,14 @@ export class chessengine {
   constructor(chess_aa, engine_path) {
     this.chess_aa = chess_aa;
 
+    // worker running the engine
     this.engine = null;
-    this.engineOn = false;
+
+    // settings/options
     this.engineMultipv = 3;
     this.engineMaxDepth = 30; // to avoid firing too many events when checkmate is found and depth reaches hundreds 
-    this.ok = false;
-    this.stopped = false;
-    this.launchEngine(engine_path);
-    if (engine_path == "desktop") {
-      window.engineAPI.engineOnSwitch(() => {let that = this; that.launchEngine("desktop")});
-      window.engineAPI.engineOnMessage(this.engineOnMessage());
-    }
 
-    this.startFen = chess_aa.startFen;
-    this.moves = [];
-
-    this.chess = new Chess(chess_aa.startFen);
-
-    this.dispatcher = document.createElement("div");
-
-    chess_aa.dispatcher.addEventListener("chess-aa-movemade", this.moveMade());
-    chess_aa.dispatcher.addEventListener("chess-aa-moveunmade", this.moveUnmade());
-    chess_aa.dispatcher.addEventListener("chess-aa-newposition", this.resetPosition());
-    chess_aa.dispatcher.addEventListener("chess-aa-enginemoverequest", this.searchMoveHandler());
-
-    // Pause engine when window is out of focus
-    this.engineOnDuringPause = false;
-    window.addEventListener("blur", this.pauseEngine());
-    window.addEventListener("focus", this.unpauseEngine());
-
+    // The mode of the engine
     if (chess_aa.mode == "play") {
       this.mode = "play";
     }
@@ -42,6 +21,41 @@ export class chessengine {
     else {
       throw("mode " + mode + " undefined.");
     }
+
+    // Whether engine has been validated to be working ok
+    this.ok = false;
+
+    // state of the engine during analysis
+    this.engineOn = false;
+    this.engineOnDuringPause = false;
+    this.stopped = false;
+    this.timeLastMessage;
+    
+    // state of the engine during play
+    this.searchingMove = false;
+
+    // launch engine
+    this.launchEngine(engine_path);
+    if (engine_path == "desktop") {
+      window.engineAPI.engineOnSwitch(() => {let that = this; that.launchEngine("desktop")});
+      window.engineAPI.engineOnMessage(this.engineOnMessage());
+    }
+
+    // chess instance is required to validate moves and change notation
+    this.chess = new Chess(chess_aa.startFen);
+
+    // Event dispatches
+    this.dispatcher = document.createElement("div");
+
+    // listen to events fired by the chess-aa instance
+    chess_aa.dispatcher.addEventListener("chess-aa-movemade", this.moveMade());
+    chess_aa.dispatcher.addEventListener("chess-aa-moveunmade", this.moveUnmade());
+    chess_aa.dispatcher.addEventListener("chess-aa-newposition", this.resetPosition());
+    chess_aa.dispatcher.addEventListener("chess-aa-enginemoverequest", this.searchMoveHandler());
+
+    // Pause engine when window is out of focus
+    window.addEventListener("blur", this.pauseEngine());
+    window.addEventListener("focus", this.unpauseEngine());
   }
 
   init() {
@@ -52,9 +66,7 @@ export class chessengine {
   launchEngine(engine_path) {
     this.ok = false;
     if (this.engineOn) this.switch(false);
-    if (this.engine) {
-      this.engine.terminate();
-    }
+    this.terminate();
     if (engine_path == "desktop") { // launch on desktop
       window.engineAPI.engineLaunch();
     }
@@ -70,7 +82,10 @@ export class chessengine {
       this.uciCmd("uci");
     }
     setTimeout(() => {
-      if (!this.ok) console.log("engine does not appear to be working properly");
+      if (!this.ok) {
+        console.log("engine does not appear to be working properly");
+        this.terminate()
+      }
     },5000)
   }
 
@@ -84,8 +99,13 @@ export class chessengine {
     }
   }
 
-  isPromotion(flag) {
-    return ["p","pn","np","pc","cp"].includes(flag);
+  terminate() {
+    if (this.engine) {
+      this.engine.terminate();
+    }
+    else { // desktop
+      window.engineAPI.engineTerminate();
+    }
   }
 
   analyzePosition() {
@@ -115,7 +135,9 @@ export class chessengine {
     return function(event) {
       that.stop();
       that.chess.load(event.detail.fen);
-      that.analyzePosition();
+      if (that.mode == "analysis") {
+        that.analyzePosition();
+      }
     }
   }
 
@@ -123,7 +145,9 @@ export class chessengine {
     let that = this;
     return function(event) {
       that.chess.move(event.detail.move);
-      that.analyzePosition();
+      if (that.mode == "analysis") {
+        that.analyzePosition();
+      }
     }
   }
 
@@ -131,7 +155,89 @@ export class chessengine {
     let that = this;
     return function(event) {
       that.chess.undo();
-      that.analyzePosition();
+      if (that.mode == "analysis") {
+        that.analyzePosition();
+      }
+    }
+  }
+
+  validate(line) {
+    if (line == "uciok") {
+      this.ok = true;
+      this.init();
+    }
+  }
+
+  analyze(line) {
+    if (this.stopped) return;
+    let engineCurrentDepth;
+    let engineCurrentScoretype;
+    let engineCurrentScore;
+    let engineCurrentVariation;
+    let multipv;
+    if (this.chess.game_over()) { // mate or draw
+      this.stop();
+      engineCurrentDepth = 0;
+      engineCurrentScoretype = this.chess.in_checkmate() ? "mate" : "draw";
+      engineCurrentScore = 0;
+      engineCurrentVariation = [];
+      multipv = 0;
+    }
+    else if (line.substring(0,4) == "info") {
+      let info = line.split(/\s+/);
+      if (info.includes("pv")) {
+        engineCurrentDepth = parseInt(info[info.indexOf("depth")+1]);
+        multipv = parseInt(info[info.indexOf("multipv")+1]) - 1;
+        engineCurrentScoretype = info[info.indexOf("score")+1];
+        engineCurrentScore = parseInt(info[info.indexOf("score")+2]);
+        engineCurrentVariation = [];
+        let moves = info.slice(info.indexOf("pv")+1);
+        let movesmade = 0;
+        for (let i=0; i<moves.length; ++i) {
+          let move = this.chess.move({ from: moves[i].slice(0,2), to: moves[i].slice(2,4), promotion: moves[i].length == 5 ? moves[i].slice(4) : "" });
+          if (!move) {
+            break;
+          }
+          ++movesmade;
+          engineCurrentVariation.push(move);
+        }
+        if (movesmade == 0) {
+          return;
+        }
+        for (let i=0; i<movesmade; ++i) {
+          this.chess.undo();
+        }
+      }
+      else {
+        return;
+      }
+    }
+    else {
+      return;
+    }
+    let event = new CustomEvent("chess-aa-engineEvaluation", 
+      { detail: 
+        { turn: this.chess.turn(),
+          score: engineCurrentScore,
+          scoreType: engineCurrentScoretype,
+          depth: engineCurrentDepth,
+          variation: engineCurrentVariation,
+          multipv: multipv,
+          fen: this.chess.fen()
+        }
+      }
+    );
+    this.dispatcher.dispatchEvent(event);
+  }
+
+  play(line) {
+    if (line.startsWith("bestmove")) {
+      let moveString = line.split(" ")[1];
+      let move = this.chess.move({ from: moveString.slice(0,2), to: moveString.slice(2,4), promotion: moveString.length == 5 ? moveString.slice(4) : "" });
+      if (move) {
+        this.chess.undo();
+        this.chess_aa.suggestMove(move);
+      }
     }
   }
 
@@ -146,99 +252,32 @@ export class chessengine {
         line = message;
       }
       // console.log("OUTPUT: ",line)
-      if (line == "uciok") {
-        that.ok = true;
-        that.init();
-        return;
+      if (!that.ok) {
+        that.validate(line);
       }
-      if (!that.ok || that.stopped) return;
-      if (that.mode == "analysis") {
-        let engineCurrentDepth;
-        let engineCurrentScoretype;
-        let engineCurrentScore;
-        let engineCurrentVariation;
-        let multipv;
-        if (that.chess.game_over()) { // mate or draw
-          that.stop();
-          engineCurrentDepth = 0;
-          engineCurrentScoretype = that.chess.in_checkmate() ? "mate" : "draw";
-          engineCurrentScore = 0;
-          engineCurrentVariation = [];
-          multipv = 0;
-        }
-        else if (line.substring(0,4) == "info") {
-          let info = line.split(/\s+/);
-          if (info.includes("pv")) {
-            engineCurrentDepth = parseInt(info[info.indexOf("depth")+1]);
-            multipv = parseInt(info[info.indexOf("multipv")+1]) - 1;
-            engineCurrentScoretype = info[info.indexOf("score")+1];
-            engineCurrentScore = parseInt(info[info.indexOf("score")+2]);
-            engineCurrentVariation = [];
-            let moves = info.slice(info.indexOf("pv")+1);
-            let movesmade = 0;
-            for (let i=0; i<moves.length; ++i) {
-              let move = that.chess.move({ from: moves[i].slice(0,2), to: moves[i].slice(2,4), promotion: moves[i].length == 5 ? moves[i].slice(4) : "" });
-              if (!move) {
-                break;
-              }
-              ++movesmade;
-              engineCurrentVariation.push(move);
-            }
-            if (movesmade == 0) {
-              return;
-            }
-            for (let i=0; i<movesmade; ++i) {
-              that.chess.undo();
-            }
-          }
-          else {
-            return;
-          }
-        }
-        else {
-          return;
-        }
-        let event = new CustomEvent("chess-aa-engineEvaluation", 
-          {detail: 
-            {turn: that.chess.turn(),
-              score: engineCurrentScore,
-              scoreType: engineCurrentScoretype,
-              depth: engineCurrentDepth,
-              variation: engineCurrentVariation,
-              multipv: multipv,
-              fen: that.chess.fen()
-            }
-          }
-        );
-        that.dispatcher.dispatchEvent(event);
-      } // end analysis
+      else if (that.mode == "analysis") {
+        that.analyze(line);
+      }
       else if (that.mode == "play") {
-        if (line.startsWith("bestmove")) {
-          let moveString = line.split(" ")[1];
-          let move = that.chess.move({ from: moveString.slice(0,2), to: moveString.slice(2,4), promotion: moveString.length == 5 ? moveString.slice(4) : "" });
-          if (move) {
-            that.chess.undo();
-            that.chess_aa.suggestMove(move);
-          }
-        }
+        that.play(line);
       }
     };
   }
 
   switch(on) {
-    if (this.mode == "play")
-      return;
-    if (on) {
-      this.engineOn = true;
-      this.analyzePosition();
-      let event = new CustomEvent("chess-aa-engineSwitchOnOff",{detail:{on:true}});
-      this.dispatcher.dispatchEvent(event);
-    }
-    else {
-      this.stop();
-      this.engineOn = false;
-      let event = new CustomEvent("chess-aa-engineSwitchOnOff",{detail:{on:false}});
-      this.dispatcher.dispatchEvent(event);
+    if (this.mode == "analysis") {
+      if (on) {
+        this.engineOn = true;
+        this.analyzePosition();
+        let event = new CustomEvent("chess-aa-engineSwitchOnOff",{detail:{on:true}});
+        this.dispatcher.dispatchEvent(event);
+      }
+      else {
+        this.stop();
+        this.engineOn = false;
+        let event = new CustomEvent("chess-aa-engineSwitchOnOff",{detail:{on:false}});
+        this.dispatcher.dispatchEvent(event);
+      }
     }
   }
 

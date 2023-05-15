@@ -1184,7 +1184,7 @@ export class chess_aa {
       this.topSVG.getElementById("arrowhead4").querySelector("path").style.fill = this.highlightedSquareColor3;
     }
     if (config.highlightedSquareColor4) {
-      this.highlightedSquareColor1 = config.highlightedSquareColor1
+      this.highlightedSquareColor4 = config.highlightedSquareColor4
     }
   }
 

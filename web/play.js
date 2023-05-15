@@ -65,7 +65,7 @@ window.flipBoard = function() {
 
 window.changeLevel = function() {
   let level = document.getElementById("level").value;
-  myChessengine.setLevel(level);
+  myChessengine.setOption("Skill Level",level);
 }
 
 window.x = myChessengine;

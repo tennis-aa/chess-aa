@@ -1,9 +1,9 @@
 import {BLACK, WHITE} from "./chess.js"
 
 export class enginebar {
-  constructor(main_div, chess_aa, chess_aa_engine) {
+  constructor(main_div, chess_aa_engine) {
     this.chess_aa_engine = chess_aa_engine;
-    this.chess_aa = chess_aa;
+    this.chess_aa = chess_aa_engine.chess_aa;
 
     this.div = document.createElement("div");
     this.div.style.position = "relative";

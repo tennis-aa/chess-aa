@@ -1,14 +1,14 @@
 import {BLACK, WHITE} from "./chess.js"
 
 export class enginevariation {
-  constructor(main_div, chess_aa, chess_aa_engine) {
+  constructor(main_div, chess_aa_engine) {
     this.div = document.createElement("div");
     this.div.appendChild(document.createTextNode("Depth: "));
     this.depthSpan = document.createElement("span");
     this.depthSpan.textContent = 0;
     this.div.appendChild(this.depthSpan);
     this.variationdivs = [];
-    for (let i=0; i<chess_aa_engine.engineMultipv; ++i) {
+    for (let i=0; i<1; ++i) {
       this.variationdivs.push(document.createElement("div"));
       this.variationdivs[i].classList.add("chess-aa-engine-variationdiv");
       this.variationdivs[i].textContent = "Variation " + (i+1);
@@ -25,13 +25,14 @@ export class enginevariation {
 
     main_div.appendChild(this.div);
 
-    this.chess_aa = chess_aa;
+    this.chess_aa = chess_aa_engine.chess_aa;
     this.chess_aa_engine = chess_aa_engine;
     chess_aa_engine.dispatcher.addEventListener("chess-aa-engineEvaluation", this.update());
+    chess_aa_engine.dispatcher.addEventListener("chess-aa-engineSetoption", this.updateMultiPV());
     // chess_aa_engine.dispatcher.addEventListener("chess-aa-engineSwitchOnOff", () => false);
-    chess_aa.dispatcher.addEventListener("chess-aa-movemade", this.clear());
-    chess_aa.dispatcher.addEventListener("chess-aa-moveunmade", this.clear());
-    chess_aa.dispatcher.addEventListener("chess-aa-newposition", this.clear());
+    this.chess_aa.dispatcher.addEventListener("chess-aa-movemade", this.clear());
+    this.chess_aa.dispatcher.addEventListener("chess-aa-moveunmade", this.clear());
+    this.chess_aa.dispatcher.addEventListener("chess-aa-newposition", this.clear());
   }
 
   update() {
@@ -82,5 +83,26 @@ export class enginevariation {
         that.variationdivs[i].replaceChildren("Variation " + (i+1));
       }
     };
+  }
+
+  updateMultiPV() {
+    let that = this;
+    return function(event) {
+      if (event.detail.name == "MultiPV") {
+        for (let i=that.variationdivs.length-1; i>=0; --i) {
+          that.variationdivs[i].remove();
+        }
+        that.variationdivs = [];
+        for (let i=0; i<event.detail.value; ++i) {
+          that.variationdivs.push(document.createElement("div"));
+          that.variationdivs[i].classList.add("chess-aa-engine-variationdiv");
+          that.variationdivs[i].textContent = "Variation " + (i+1);
+          that.variationdivs[i].style.whiteSpace = "nowrap";
+          that.variationdivs[i].style.overflowX = "scroll";
+          that.variationdivs[i].style.scrollbarWidth = "thin";
+          that.div.appendChild(that.variationdivs[i]);
+        }
+      }
+    }
   }
 }

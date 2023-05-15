@@ -8,7 +8,7 @@ export class chessengine {
     this.engine = null;
 
     // settings/options
-    this.engineMultipv = 3;
+    this.options = {};
     this.engineMaxDepth = 30; // to avoid firing too many events when checkmate is found and depth reaches hundreds 
 
     // The mode of the engine
@@ -59,8 +59,8 @@ export class chessengine {
   }
 
   init() {
-    this.uciCmd("setoption name MultiPV value " + this.engineMultipv);
-    this.uciCmd("setoption name Use NNUE value true");
+    this.setOption("MultiPV", 3);
+    this.setOption("Use NNUE",true);
   }
 
   launchEngine(engine_path) {
@@ -100,10 +100,11 @@ export class chessengine {
   }
 
   terminate() {
+    this.options = {};
     if (this.engine) {
       this.engine.terminate();
     }
-    else { // desktop
+    else if (window.engineAPI) { // desktop
       window.engineAPI.engineTerminate();
     }
   }
@@ -166,6 +167,54 @@ export class chessengine {
       this.ok = true;
       this.init();
     }
+    else if (line.startsWith("option")) {
+      line = line.split(" ");
+      let name;
+      let type;
+      let value;
+      let min;
+      let max;
+      let reading = "name";
+      for (let i=2; i<line.length;++i) {
+        if (reading == "name") {
+          if (line[i] == "type") {
+            reading = "type";
+            continue;
+          }
+          if (name) name += " " + line[i];
+          else name = line[i];
+        }
+        else if (reading == "type") {
+          type = line[i];
+          reading = "value";
+        }
+        else if (reading == "value") {
+          if (line[i] == "default") continue;
+          if (type == "spin") value = parseInt(line[i]);
+          else if (type == "check") value = line[i] == "true" ? true : false;
+          else value = line[i];
+          reading = "min"
+        }
+        else if (reading == "min") {
+          if (line[i] == "min") continue;
+          min = parseInt(line[i]);
+          reading = "max";
+        }
+        else if (reading == "max") {
+          if (line[i] == "max") continue;
+          max = parseInt(line[i]);
+        }
+      }
+      this.options[name] = {type: type};
+      if (type == "string" || type == "check") {
+        this.options[name].value = value;
+      }
+      else if (type == "spin") {
+        this.options[name].value = value;
+        this.options[name].min = min;
+        this.options[name].max = max;
+      }
+    }
   }
 
   analyze(line) {
@@ -183,7 +232,7 @@ export class chessengine {
       engineCurrentVariation = [];
       multipv = 0;
     }
-    else if (line.substring(0,4) == "info") {
+    else if (line.startsWith("info")) {
       let info = line.split(/\s+/);
       if (info.includes("pv")) {
         engineCurrentDepth = parseInt(info[info.indexOf("depth")+1]);
@@ -296,9 +345,52 @@ export class chessengine {
     };
   }
 
-  setLevel(level) {
-    if (this.mode == "play")
-      this.uciCmd("setoption name Skill Level value " + level);
+  setOption(name,value) {
+    let option = this.options[name];
+    if (option) {
+      if (option.type == "button") {
+        this.uciCmd("setoption name " + name);
+      }
+      else if (option.type == "check") {
+        if (value === true) {
+          option.value = value;
+          this.uciCmd("setoption name " + name + " value true");
+        }
+        else if (value === false) {
+          option.value = value;
+          this.uciCmd("setoption name " + name + " value false");
+        }
+        else {
+          console.log("engine option",name,"needs to be either true or false");
+          return;
+        }
+      }
+      else if (option.type == "string") {
+        if (typeof value === "string" || value instanceof String) {
+          option.value = value;
+          this.uciCmd("setoption name " + name + " value " + value);
+        }
+        else {
+          console.log("engine option",name,"needs to be a string");
+          return;
+        }
+      }
+      else if (option.type == "spin") {
+        if (Number.isInteger(value) && value >= option.min && value <= option.max) {
+          option.value = value;
+          this.uciCmd("setoption name " + name + " value " + value);
+        }
+        else {
+          console.log("engine option",name,"needs to be an integer between",option.min,"and",option.max);
+          return;
+        }
+      }
+      let event = new CustomEvent("chess-aa-engineSetoption",{detail:{name:name,value:value}});
+      this.dispatcher.dispatchEvent(event);
+    }
+    else {
+      console.log("engine option",name,"does not exist");
+    }
   }
 
   searchMove(fen) {

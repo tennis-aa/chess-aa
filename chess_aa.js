@@ -699,9 +699,10 @@ export class chess_aa {
   }
 
   addCommentAt(s, address) {
-    this.variations.addCommentAt(s,address);
-    let event = new CustomEvent("chess-aa-addedcomment",{detail:{comment: s, address: address}});
-    this.dispatcher.dispatchEvent(event);
+    if (this.variations.addCommentAt(s,address)) {
+      let event = new CustomEvent("chess-aa-addedcomment",{detail:{comment: s, address: address}});
+      this.dispatcher.dispatchEvent(event);
+    }
   }
 
   addComment(s) {
@@ -711,15 +712,19 @@ export class chess_aa {
   }
 
   deleteCommentAt(address,index) {
-    this.variations.deleteComment(address,index);
-    let event = new CustomEvent("chess-aa-deletedcomment",{detail:{address: address, index: index}});
-    this.dispatcher.dispatchEvent(event);
+    if (this.variations.deleteComment(address,index)) {
+      let event = new CustomEvent("chess-aa-deletedcomment",{detail:{address: address, index: index}});
+      this.dispatcher.dispatchEvent(event);
+    }
   }
 
   deleteComment(index) {
-    this.variations.deleteComment(index);
-    let event = new CustomEvent("chess-aa-deletedcomment",{detail:{address: this.variations.address(), index: index}});
-    this.dispatcher.dispatchEvent(event);
+    console.log("trying to delete comment")
+    if (this.variations.deleteComment(index)) {
+      console.log("deleting comment")
+      let event = new CustomEvent("chess-aa-deletedcomment",{detail:{address: this.variations.address(), index: index}});
+      this.dispatcher.dispatchEvent(event);
+    }
   }
 
   clearComments() {
@@ -734,6 +739,44 @@ export class chess_aa {
 
   getComments() {
     return this.variations.getComments();
+  }
+
+  addAnnotationAt(s, address) {
+    this.variations.addAnnotationAt(s,address);
+    let event = new CustomEvent("chess-aa-addedannotation",{detail:{annotation: s, address: address}});
+    this.dispatcher.dispatchEvent(event);
+  }
+
+  addAnnotation(s) {
+    this.variations.addAnnotation(s);
+    let event = new CustomEvent("chess-aa-addedannotation",{detail:{annotation: s, address: this.variations.address()}});
+    this.dispatcher.dispatchEvent(event);
+  }
+
+  deleteAnnotationAt(address,index) {
+    this.variations.deleteAnnotation(address,index);
+    let event = new CustomEvent("chess-aa-deletedannotation",{detail:{address: address, index: index}});
+    this.dispatcher.dispatchEvent(event);
+  }
+
+  deleteAnnotation(index) {
+    this.variations.deleteAnnotation(index);
+    let event = new CustomEvent("chess-aa-deletedannotation",{detail:{address: this.variations.address(), index: index}});
+    this.dispatcher.dispatchEvent(event);
+  }
+
+  clearAnnotations() {
+    this.variations.clearAnnotations();
+    let event = new Event("chess-aa-clearannotations");
+    this.dispatcher.dispatchEvent(event);
+  }
+
+  getAnnotation(index=0) {
+    return this.variations.getAnnotation(index);
+  }
+
+  getAnnotations() {
+    return this.variations.getAnnotations();
   }
 
   drag() {

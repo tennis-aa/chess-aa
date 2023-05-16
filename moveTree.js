@@ -419,23 +419,26 @@ export class moveTree {
     }
   }
 
-  deleteComment(index) {
+  deleteComment(index = null) {
     if (this.activeBranch === -1) {
       if (index === null) {
         index = this.comment.length-1;
       }
       if (this.comment.length > index) {
         this.comment.splice(index,1);
+        return true;
       }
+      else 
+        return false;
     }
     else {
-      this.children[this.activeBranch].deleteComment(index);
+      return this.children[this.activeBranch].deleteComment(index);
     }
   }
 
   deleteAllComments() {
     if (this.activeBranch === -1) {
-        this.comment.length = 0;
+      this.comment.length = 0;
     }
     else {
       this.children[this.activeBranch].deleteAllComments();
@@ -475,7 +478,7 @@ export class moveTree {
     }
   }
 
-  deleteCommentAt(address,index) {
+  deleteCommentAt(address,index = null) {
     if (address.length === 0) {
       if (index === null) {
         index = this.comment.length-1;
@@ -498,8 +501,8 @@ export class moveTree {
 
   deleteAllCommentsAt(address) {
     if (address.length === 0) {
-        this.comment.length = 0;
-        return true;
+      this.comment.length = 0;
+      return true;
     }
     else if (address[0] >= this.children.length || address[0] < 0) {
       return false;
@@ -544,34 +547,48 @@ export class moveTree {
     }
   }
 
+  isvalidAnnotation(s) {
+    if (["!", "?", "!!", "!?", "?!","??"].includes(s) && this.annotation.length === 0) return true;
+    else if (s.startsWith("$")) {
+      let n = Number(s.slice(1));
+      if (n && Number.isInteger(n) && n >= 0 && n < 256) 
+        return true
+    }
+    return false;
+  }
+
   addAnnotation(s) {
-    if (!"$?!".includes(s.slice(0,1)))
-      return;
     if (this.activeBranch === -1) {
-      this.annotation.push(s);
+      if (this.isvalidAnnotation(s)) {
+        this.annotation.push(s);
+        return true;
+      }
     }
     else {
-      this.children[this.activeBranch].addAnnotation(s);
+      return this.children[this.activeBranch].addAnnotation(s);
     }
   }
 
-  deleteAnnotation(index) {
+  deleteAnnotation(index = null) {
     if (this.activeBranch === -1) {
       if (index === null) {
         index = this.annotation.length-1;
       }
       if (this.annotation.length > index) {
         this.annotation.splice(index,1);
+        return true
       }
+      else 
+        return false;
     }
     else {
-      this.children[this.activeBranch].deleteAnnotation(index);
+      return this.children[this.activeBranch].deleteAnnotation(index);
     }
   }
 
   deleteAllAnnotations() {
     if (this.activeBranch === -1) {
-        this.annotation.length = 0;
+      this.annotation.length = 0;
     }
     else {
       this.children[this.activeBranch].deleteAllAnnotations();
@@ -591,7 +608,7 @@ export class moveTree {
 
   getAnnotations() {
     if (this.activeBranch === -1) {
-        return this.annotation.slice();
+      return this.annotation.slice();
     }
     else {
       return this.children[this.activeBranch].getAnnotations();
@@ -599,11 +616,11 @@ export class moveTree {
   }
 
   addAnnotationAt(s,address) {
-    if (!"$?!".includes(s.slice(0,1)))
-      return;
     if (address.length === 0) {
-      this.annotation.push(s);
-      return true;
+      if (this.isvalidAnnotation(s)) {
+        this.annotation.push(s);
+        return true;
+      }
     }
     else if (address[0] >= this.children.length || address[0] < 0) {
       return false;
@@ -613,7 +630,7 @@ export class moveTree {
     }
   }
 
-  deleteAnnotationAt(address,index) {
+  deleteAnnotationAt(address,index = null) {
     if (address.length === 0) {
       if (index === null) {
         index = this.annotation.length-1;
@@ -636,8 +653,8 @@ export class moveTree {
 
   deleteAllAnnotationsAt(address) {
     if (address.length === 0) {
-        this.annotation.length = 0;
-        return true;
+      this.annotation.length = 0;
+      return true;
     }
     else if (address[0] >= this.children.length || address[0] < 0) {
       return false;

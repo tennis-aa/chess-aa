@@ -223,21 +223,19 @@ export function loadpgn(str) {
       }
     } 
     else if (readingAnnotation) {
-      if (/\s/.test(char)) {
-        tree.addAnnotation(annotation);
-        annotation = "";
-        betweenMoves = true;
-        readingAnnotation = false;
+      if (/\s/.test(char) || char === ")") {
+        if (tree.addAnnotation(annotation)) {
+          annotation = "";
+          betweenMoves = true;
+          readingAnnotation = false;
+          if (char === ")") --i;
+        }
+        else {
+          throw ("improper pgn: unknown annotation " + annotation + " at " + chess.pgn());
+        }
       }
       else if (/[0-9]/.test(char) || "$?!".includes(char)) 
         annotation += char;
-      else if (char === ")") {
-        tree.addAnnotation(annotation);
-        annotation = "";
-        --i;
-        betweenMoves = true;
-        readingAnnotation = false;
-      }
       else {
         throw ("improper pgn: unknown annotation characters at " + chess.pgn() + " " + char + " " + annotation);
       }

@@ -4,7 +4,6 @@ export class playerbox {
   constructor(main_div,chess_aa,color) {
     this.chess_aa = chess_aa;
     this.color = color;
-    // console.log(color)
 
     this.div = document.createElement("div");
     this.playernameDiv = document.createElement("span");
@@ -26,8 +25,7 @@ export class playerbox {
   }
 
   updateName() {
-    console.log(this.color)
-    this.playernameDiv.textContent = this.chess_aa.header[this.color == WHITE ? "White" : "Black"];
+    this.playernameDiv.textContent = this.chess_aa.header[this.color === WHITE ? "White" : "Black"];
   }
 
   updateNameHandler() {
@@ -38,7 +36,7 @@ export class playerbox {
   }
 
   updateMaterial() {
-    this.playermaterialDiv.textContent = this.chess_aa.material() * (this.color == WHITE ? 1 : -1);
+    this.playermaterialDiv.textContent = this.chess_aa.material() * (this.color === WHITE ? 1 : -1);
   }
 
   updateMaterialHandler() {
@@ -49,7 +47,7 @@ export class playerbox {
   }
 
   flipColor() {
-    this.color = this.color == WHITE ? BLACK : WHITE;
+    this.color = this.color === WHITE ? BLACK : WHITE;
     this.updateName();
     this.updateMaterial();
   }

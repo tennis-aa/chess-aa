@@ -39,7 +39,7 @@ export class enginevariation {
     let that = this;
     return function(event) {
       that.depthSpan.textContent = event.detail.depth;
-      if (event.detail.variation.length == 0) { // mate or draw
+      if (event.detail.variation.length === 0) { // mate or draw
         for (let i=0; i<that.variationdivs.length; ++i) {
           that.variationdivs[i].replaceChildren("#");
         }
@@ -49,13 +49,13 @@ export class enginevariation {
       let variation = [];
       let variationdiv = that.variationdivs[event.detail.multipv];
       variationdiv.replaceChildren();
-      let score = event.detail.score * (event.detail.turn == WHITE ? 1 : -1);
+      let score = event.detail.score * (event.detail.turn === WHITE ? 1 : -1);
       let scorespan = document.createElement("span");
       scorespan.style.fontWeight = "bold";
-      if (event.detail.scoreType == "cp") {
+      if (event.detail.scoreType === "cp") {
         scorespan.textContent = "" + (score/100) + ": ";
       }
-      else if (event.detail.scoreType == "mate") {
+      else if (event.detail.scoreType === "mate") {
         scorespan.textContent = "M" + score + ": ";
       }
       variationdiv.appendChild(scorespan);
@@ -88,7 +88,7 @@ export class enginevariation {
   updateMultiPV() {
     let that = this;
     return function(event) {
-      if (event.detail.name == "MultiPV") {
+      if (event.detail.name === "MultiPV") {
         for (let i=that.variationdivs.length-1; i>=0; --i) {
           that.variationdivs[i].remove();
         }

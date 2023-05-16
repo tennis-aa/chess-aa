@@ -75,7 +75,7 @@ function test_engine(path, browserwindow) {
     let lines = data.split(/\r?\n/);
     for (let i=0; i<lines.length; ++i) {
       // console.log("OUTPUT TEST:",lines[i])
-      if (lines[i] == "uciok") {
+      if (lines[i] === "uciok") {
         engine_test.stdin.write("quit\n");
         clearTimeout(timeoutID);
         ask_for_engine_settings(path, browserwindow);

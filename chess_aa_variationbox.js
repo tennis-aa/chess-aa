@@ -68,9 +68,9 @@ export class variationbox {
       let text = "";
       let prevaddress;
       let prev; // the object after which we will place the new move
-      if (address.length == 1 && branch == 0) {// First move
+      if (address.length === 1 && branch === 0) {// First move
         this.variationsDiv.appendChild(span);
-        if (halfmove % 2 == 1) {
+        if (halfmove % 2 === 1) {
           text += (halfmove+1)/2 + ". " + move.san + " ";
         }
         else {
@@ -85,7 +85,7 @@ export class variationbox {
         variationspan.setAttribute("data-address",JSON.stringify(address) + "container");
         openbracket = document.createElement("span");
         closingbracket = document.createElement("span");
-        if (level == 1) {
+        if (level === 1) {
           variationspan.style.display = "block";
           variationspan.style.marginLeft = "2em";
         }
@@ -101,7 +101,7 @@ export class variationbox {
 
         prevaddress = address.slice(0,address.length-1);
         prevaddress.push(branch-1);
-        if (branch == 1) {
+        if (branch === 1) {
           prev = this.variationsDiv.querySelector("[data-address='" + JSON.stringify(prevaddress) + "']");
         }
         else {
@@ -109,7 +109,7 @@ export class variationbox {
         }
         prev.after(variationspan);
 
-        if (halfmove % 2 == 1) {
+        if (halfmove % 2 === 1) {
           text += (halfmove+1)/2 + ". " + move.san + " ";
         }
         else {
@@ -119,7 +119,7 @@ export class variationbox {
 
         // the following move in the main variation needs to get the three dots for continuation when a new branch is added
         prevaddress.push(0); // prevaddress is now the address to that following move
-        if (branch == 1 && halfmove % 2 == 1 && this.chess_aa.variations.addressExists(prevaddress)) {
+        if (branch === 1 && halfmove % 2 === 1 && this.chess_aa.variations.addressExists(prevaddress)) {
           prev = this.variationsDiv.querySelector("[data-address='" + JSON.stringify(prevaddress) + "']");
           if (prev) {
             let s = prev.textContent;
@@ -128,10 +128,10 @@ export class variationbox {
           }
         }
       }
-      else { // branch == 0 && address.length > 1
+      else { // branch === 0 && address.length > 1
         prevaddress = address.slice(0,address.length-2);
         let nbranches = this.chess_aa.variations.numberOfBranchesAt(prevaddress);
-        if (address[address.length-2] > 0 || nbranches == 1) { // there are no branches between the previous move and the current move
+        if (address[address.length-2] > 0 || nbranches === 1) { // there are no branches between the previous move and the current move
           prevaddress.push(address[address.length-2]);
           prev = this.variationsDiv.querySelector("[data-address='" + JSON.stringify(prevaddress) + "']");
           prev.after(span);
@@ -146,10 +146,10 @@ export class variationbox {
           prev.after(span);
         }
 
-        if (halfmove % 2 == 1) {
+        if (halfmove % 2 === 1) {
           text += (halfmove+1)/2 + ". " + move.san + " ";
         }
-        else if (address[address.length-2] == 0 && nbranches > 1) {
+        else if (address[address.length-2] === 0 && nbranches > 1) {
           text += halfmove/2 + "... " + move.san + " ";
         }
         else {

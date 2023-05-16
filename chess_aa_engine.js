@@ -12,10 +12,10 @@ export class chessengine {
     this.engineMaxDepth = 30; // to avoid firing too many events when checkmate is found and depth reaches hundreds 
 
     // The mode of the engine
-    if (chess_aa.mode == "play") {
+    if (chess_aa.mode === "play") {
       this.mode = "play";
     }
-    else if (chess_aa.mode == "analysis") {
+    else if (chess_aa.mode === "analysis") {
       this.mode = "analysis";
     }
     else {
@@ -36,7 +36,7 @@ export class chessengine {
 
     // launch engine
     this.launchEngine(engine_path);
-    if (engine_path == "desktop") {
+    if (engine_path === "desktop") {
       window.engineAPI.engineOnSwitch(() => {let that = this; that.launchEngine("desktop")});
       window.engineAPI.engineOnMessage(this.engineOnMessage());
     }
@@ -67,7 +67,7 @@ export class chessengine {
     this.ok = false;
     if (this.engineOn) this.switch(false);
     this.terminate();
-    if (engine_path == "desktop") { // launch on desktop
+    if (engine_path === "desktop") { // launch on desktop
       window.engineAPI.engineLaunch();
     }
     else if (engine_path) {
@@ -136,7 +136,7 @@ export class chessengine {
     return function(event) {
       that.stop();
       that.chess.load(event.detail.fen);
-      if (that.mode == "analysis") {
+      if (that.mode === "analysis") {
         that.analyzePosition();
       }
     }
@@ -146,7 +146,7 @@ export class chessengine {
     let that = this;
     return function(event) {
       that.chess.move(event.detail.move);
-      if (that.mode == "analysis") {
+      if (that.mode === "analysis") {
         that.analyzePosition();
       }
     }
@@ -156,14 +156,14 @@ export class chessengine {
     let that = this;
     return function(event) {
       that.chess.undo();
-      if (that.mode == "analysis") {
+      if (that.mode === "analysis") {
         that.analyzePosition();
       }
     }
   }
 
   validate(line) {
-    if (line == "uciok") {
+    if (line === "uciok") {
       this.ok = true;
       this.init();
     }
@@ -176,40 +176,40 @@ export class chessengine {
       let max;
       let reading = "name";
       for (let i=2; i<line.length;++i) {
-        if (reading == "name") {
-          if (line[i] == "type") {
+        if (reading === "name") {
+          if (line[i] === "type") {
             reading = "type";
             continue;
           }
           if (name) name += " " + line[i];
           else name = line[i];
         }
-        else if (reading == "type") {
+        else if (reading === "type") {
           type = line[i];
           reading = "value";
         }
-        else if (reading == "value") {
-          if (line[i] == "default") continue;
-          if (type == "spin") value = parseInt(line[i]);
-          else if (type == "check") value = line[i] == "true" ? true : false;
+        else if (reading === "value") {
+          if (line[i] === "default") continue;
+          if (type === "spin") value = parseInt(line[i]);
+          else if (type === "check") value = line[i] === "true" ? true : false;
           else value = line[i];
           reading = "min"
         }
-        else if (reading == "min") {
-          if (line[i] == "min") continue;
+        else if (reading === "min") {
+          if (line[i] === "min") continue;
           min = parseInt(line[i]);
           reading = "max";
         }
-        else if (reading == "max") {
-          if (line[i] == "max") continue;
+        else if (reading === "max") {
+          if (line[i] === "max") continue;
           max = parseInt(line[i]);
         }
       }
       this.options[name] = {type: type};
-      if (type == "string" || type == "check") {
+      if (type === "string" || type === "check") {
         this.options[name].value = value;
       }
-      else if (type == "spin") {
+      else if (type === "spin") {
         this.options[name].value = value;
         this.options[name].min = min;
         this.options[name].max = max;
@@ -243,14 +243,14 @@ export class chessengine {
         let moves = info.slice(info.indexOf("pv")+1);
         let movesmade = 0;
         for (let i=0; i<moves.length; ++i) {
-          let move = this.chess.move({ from: moves[i].slice(0,2), to: moves[i].slice(2,4), promotion: moves[i].length == 5 ? moves[i].slice(4) : "" });
+          let move = this.chess.move({ from: moves[i].slice(0,2), to: moves[i].slice(2,4), promotion: moves[i].length === 5 ? moves[i].slice(4) : "" });
           if (!move) {
             break;
           }
           ++movesmade;
           engineCurrentVariation.push(move);
         }
-        if (movesmade == 0) {
+        if (movesmade === 0) {
           return;
         }
         for (let i=0; i<movesmade; ++i) {
@@ -282,7 +282,7 @@ export class chessengine {
   play(line) {
     if (line.startsWith("bestmove")) {
       let moveString = line.split(" ")[1];
-      let move = this.chess.move({ from: moveString.slice(0,2), to: moveString.slice(2,4), promotion: moveString.length == 5 ? moveString.slice(4) : "" });
+      let move = this.chess.move({ from: moveString.slice(0,2), to: moveString.slice(2,4), promotion: moveString.length === 5 ? moveString.slice(4) : "" });
       if (move) {
         this.chess.undo();
         this.chess_aa.suggestMove(move);
@@ -304,17 +304,17 @@ export class chessengine {
       if (!that.ok) {
         that.validate(line);
       }
-      else if (that.mode == "analysis") {
+      else if (that.mode === "analysis") {
         that.analyze(line);
       }
-      else if (that.mode == "play") {
+      else if (that.mode === "play") {
         that.play(line);
       }
     };
   }
 
   switch(on) {
-    if (this.mode == "analysis") {
+    if (this.mode === "analysis") {
       if (on) {
         this.engineOn = true;
         this.analyzePosition();
@@ -348,10 +348,10 @@ export class chessengine {
   setOption(name,value) {
     let option = this.options[name];
     if (option) {
-      if (option.type == "button") {
+      if (option.type === "button") {
         this.uciCmd("setoption name " + name);
       }
-      else if (option.type == "check") {
+      else if (option.type === "check") {
         if (value === true) {
           option.value = value;
           this.uciCmd("setoption name " + name + " value true");
@@ -365,7 +365,7 @@ export class chessengine {
           return;
         }
       }
-      else if (option.type == "string") {
+      else if (option.type === "string") {
         if (typeof value === "string" || value instanceof String) {
           option.value = value;
           this.uciCmd("setoption name " + name + " value " + value);
@@ -375,7 +375,7 @@ export class chessengine {
           return;
         }
       }
-      else if (option.type == "spin") {
+      else if (option.type === "spin") {
         if (Number.isInteger(value) && value >= option.min && value <= option.max) {
           option.value = value;
           this.uciCmd("setoption name " + name + " value " + value);

@@ -33,7 +33,7 @@ export function loadpgn(str) {
 
     if (readingKey) {
       if (/\s/.test(char)) {
-        if (key=="")
+        if (key==="")
           continue; // ignore spaces between the square bracket and the value
         else {
           readingKey = false;
@@ -45,7 +45,7 @@ export function loadpgn(str) {
       }
     }
     else if (betweenKeyAndValue) {
-      if (char=='"') {
+      if (char==='"') {
         betweenKeyAndValue = false;
         readingValue = true;
       }
@@ -59,12 +59,12 @@ export function loadpgn(str) {
     else if (readingValue) {
       if (backslashEscape) {
         backslashEscape = false;
-        if (char=='"' || char=="\\") {
+        if (char==='"' || char==="\\") {
           value += char;
         }
       }
       else {
-        if (char=='"') {
+        if (char==='"') {
           readingValue = false;
           endValue = true;
         }
@@ -74,7 +74,7 @@ export function loadpgn(str) {
       }
     }
     else if (endValue) {
-      if (char=="]") {
+      if (char==="]") {
         endValue = false;
         header[key] = value;
         key = "";
@@ -96,16 +96,16 @@ export function loadpgn(str) {
         readingMoveNumber = true;
         --i;
       }
-      else if (char=="{") {
+      else if (char==="{") {
         readingComment = true;
       }
-      else if (char=="(") {
+      else if (char==="(") {
         chess.undo();
         tree.undo();
         movecount.push(0);
         readingMoveNumber = true;
       }
-      else if (char==")") {
+      else if (char===")") {
         if (movecount.length <=1) {
           throw "improper pgn: closing parenthesis without opening parenthesis";
         }
@@ -119,14 +119,14 @@ export function loadpgn(str) {
         tree.redo(0);
         continue;
       }
-      else if (char=="*") {
+      else if (char==="*") {
         --i;
         readingResult = true;
       }
       else if (/\s/.test(char)) {
         continue;
       }
-      else if (char == "$") {
+      else if (char === "$") {
         readingAnnotation = true;
         --i;
       }
@@ -174,23 +174,23 @@ export function loadpgn(str) {
         movenumberstr += char;
       }
       else if (/[a-zA-Z]/.test(char)) {
-        if (movenumberstr == "") {
+        if (movenumberstr === "") {
           // there was no move number
           readingMove = true;
           readingMoveNumber = false;
           --i;
-          if (initialMoveNumber == -1)
+          if (initialMoveNumber === -1)
             initialMoveNumber = 0;
         }
         else {
           throw "improper pgn: found a letter in a move number, a period may be missing.";
         }
       }
-      else if (char == ".") {
+      else if (char === ".") {
         betweenMoveNumberAndMove = true;
         readingMoveNumber = false;
       }
-      else if (char=="/" || char=="-") {
+      else if (char==="/" || char==="-") {
         movenumberstr += char;
         readingResult = true;
         readingMoveNumber = false;
@@ -203,13 +203,13 @@ export function loadpgn(str) {
       }
     }
     else if (betweenMoveNumberAndMove) {
-      if (/\s/.test(char) || char==".") {
+      if (/\s/.test(char) || char===".") {
         continue;
       }
       else {
-        if (initialMoveNumber == -1) {
+        if (initialMoveNumber === -1) {
           initialMoveNumber = parseInt(movenumberstr);
-          if (chess.turn() == WHITE) {
+          if (chess.turn() === WHITE) {
             tree.halfmove = initialMoveNumber * 2 - 2;
           }
           else {
@@ -231,7 +231,7 @@ export function loadpgn(str) {
       }
       else if (/[0-9]/.test(char) || "$?!".includes(char)) 
         annotation += char;
-      else if (char == ")") {
+      else if (char === ")") {
         tree.addAnnotation(annotation);
         annotation = "";
         --i;
@@ -243,7 +243,7 @@ export function loadpgn(str) {
       }
     }
     else if (readingComment) {
-      if (char=="}") {
+      if (char==="}") {
         tree.addComment(comment);
         comment = "";
         betweenMoves = true;
@@ -265,17 +265,17 @@ export function loadpgn(str) {
     }
     else {
       if (/\s/.test(char)) continue;
-      if (char=="[")
+      if (char==="[")
         readingKey = true;
       else {
         // start reading moves (or comments)
-        if (char == "{")
+        if (char === "{")
           readingComment = true;
         else {
           readingMoveNumber = true;
           --i;
         }
-        if (header["SetUp"] == "1") {
+        if (header["SetUp"] === "1") {
           if (!header["FEN"])
             throw "improper pgn: if SetUp key is 1, then a FEN key is required";
           if (!chess.load(header["FEN"]))

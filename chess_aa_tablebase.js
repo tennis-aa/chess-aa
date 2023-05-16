@@ -28,7 +28,7 @@ export class tablebase {
       fetch("https://tablebase.lichess.ovh/standard?fen=" + event.detail.fen
       ).then((response) => response.json()
       ).then((x) => {
-        if (x.category == "unknown") {
+        if (x.category === "unknown") {
           this.outcomes.replaceChildren();
           this.bestMove.replaceChildren();
         }

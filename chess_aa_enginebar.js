@@ -60,11 +60,11 @@ export class enginebar {
       let whiteShare;
       let scoreType = event.detail.scoreType;
       let score = event.detail.score;
-      if (event.detail.turn == BLACK){
+      if (event.detail.turn === BLACK){
         score = -score;
       }
 
-      if (scoreType == "cp") {
+      if (scoreType === "cp") {
         if (score > 0) {
           whiteShare = Math.min(50 + score/10, 100);
           that.black.textContent = "";
@@ -76,9 +76,9 @@ export class enginebar {
           that.white.textContent = "";
         }
       }
-      else if (scoreType == "mate") {
-        if (score == 0) {
-          if (event.detail.turn == BLACK) {
+      else if (scoreType === "mate") {
+        if (score === 0) {
+          if (event.detail.turn === BLACK) {
             whiteShare = 100;
             that.black.textContent = "";
             that.white.textContent = "1-0";
@@ -100,7 +100,7 @@ export class enginebar {
           that.white.textContent = "";
         }
       }
-      else if (scoreType == "draw") {
+      else if (scoreType === "draw") {
         whiteShare = 50;
         that.black.textContent = "1/2";
         that.white.textContent = "1/2";

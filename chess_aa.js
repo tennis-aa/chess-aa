@@ -166,12 +166,12 @@ export class chess_aa {
     // Settings
     this.showAvailableMoves = true;
 
-    if (mode == "play") {
+    if (mode === "play") {
       this.mode = "play";
       this.player = WHITE;
       this.moveRequested = false;
     }
-    else if (mode == "analysis") {
+    else if (mode === "analysis") {
       this.mode = "analysis";
     }
     else {
@@ -249,7 +249,7 @@ export class chess_aa {
   }
 
   loadFEN(fen = this.DEFAULTFEN, quiet=false) {
-    if (fen == "") {
+    if (!fen) {
       fen = this.DEFAULTFEN
     }
     if (!this.chess.load(fen)){
@@ -270,7 +270,7 @@ export class chess_aa {
 
     this.variations.clear();
     if (!quiet) { // skip the following block when loading a pgn
-      if (this.startFen == this.DEFAULTFEN)
+      if (this.startFen === this.DEFAULTFEN)
         this.header = {};
       else
         this.header = {FEN: this.startFen, SetUp: "1"};
@@ -278,7 +278,7 @@ export class chess_aa {
       this.dispatcher.dispatchEvent(event);
     }
 
-    if (this.mode == "play" && this.player != this.chess.turn()) {
+    if (this.mode === "play" && this.player != this.chess.turn()) {
       this.requestMove();
     }
 
@@ -300,7 +300,7 @@ export class chess_aa {
       return;
     }
 
-    if (header["SetUp"] == "1") {
+    if (header["SetUp"] === "1") {
       this.loadFEN(header["FEN"],true);
     }
     else {
@@ -309,7 +309,7 @@ export class chess_aa {
     this.header = header;
     this.variations = tree;
 
-    if (this.mode == "play") {
+    if (this.mode === "play") {
       this.variations.prune()
       this.gotoAddress(this.variations.addressLastMain());
     }
@@ -358,7 +358,7 @@ export class chess_aa {
     let availableMoves = this.chess.moves({ verbose: true, square: this.squareNames[source] });
     for (let i = 0; i < availableMoves.length; i++) {
       let move = availableMoves[i];
-      if (move.to == this.squareNames[target]){
+      if (move.to === this.squareNames[target]){
         return move;
       }
     }
@@ -418,7 +418,7 @@ export class chess_aa {
       case "b": break;
       case "e":
         let ep_square;
-        if ((this.chess.turn() == WHITE && this.whiteDown) || (this.chess.turn() == BLACK && !this.whiteDown))
+        if ((this.chess.turn() === WHITE && this.whiteDown) || (this.chess.turn() === BLACK && !this.whiteDown))
           ep_square = target - 8;
         else
           ep_square = target + 8;
@@ -426,7 +426,7 @@ export class chess_aa {
         this.chessboard.removeChild(ep_image);
         break;
       case "k":
-        if (this.chess.turn() == BLACK) {
+        if (this.chess.turn() === BLACK) {
           rookSource = this.squareNamesMap["h1"];
           rookTarget = this.squareNamesMap["f1"];
         } 
@@ -437,7 +437,7 @@ export class chess_aa {
         this.movePiece(rookSource, rookTarget);
         break;
       case "q":
-        if (this.chess.turn() == BLACK) {
+        if (this.chess.turn() === BLACK) {
           rookSource = this.squareNamesMap["a1"];
           rookTarget = this.squareNamesMap["d1"];
         } 
@@ -455,7 +455,7 @@ export class chess_aa {
       case "p":
       case "np":
       case "pn":
-        imageSource.src = this.pieceSVGsrc(this.chess.turn() == WHITE ? BLACK : WHITE, move.promotion);
+        imageSource.src = this.pieceSVGsrc(this.chess.turn() === WHITE ? BLACK : WHITE, move.promotion);
         break;
       case "c":
         imageTarget = this.chessboard.querySelector('[data-square="' + target + '"]');
@@ -465,7 +465,7 @@ export class chess_aa {
 
     let children = this.variations.getChildren();
     let moveAlreadyMade = false;
-    if (branch == null) {
+    if (branch === null) {
       for (let i=0; i<children.length; i++) {
         let child = children[i];
         if (this.moveEqual(move,child.move)){
@@ -501,7 +501,7 @@ export class chess_aa {
     this.dispatcher.dispatchEvent(event);
 
     // Ask engine for a move
-    if (this.mode == "play" && this.player != this.chess.turn()) {
+    if (this.mode === "play" && this.player != this.chess.turn()) {
       this.requestMove();
     }
 
@@ -509,9 +509,9 @@ export class chess_aa {
   }
 
   moveEqual(m1,m2) {
-    return m1.from == m2.from && m1.to == m2.to &&
-        m1.color == m2.color && m1.piece == m2.piece &&
-        m1.promotion == m2.promotion;
+    return m1.from === m2.from && m1.to === m2.to &&
+        m1.color === m2.color && m1.piece === m2.piece &&
+        m1.promotion === m2.promotion;
   }
 
   requestMove() {
@@ -521,7 +521,7 @@ export class chess_aa {
   }
 
   suggestMove(move) {
-    if (this.mode == "play" && this.moveRequested) {
+    if (this.mode === "play" && this.moveRequested) {
       if (this.makeMove(move,true))
         this.moveRequested = false;
     }
@@ -531,7 +531,7 @@ export class chess_aa {
     let move = this.chess.undo()
     if (move) {
       if (move.captured) {
-        ++this.pieceCount[(this.chess.turn() == WHITE ? BLACK : WHITE) + move.captured]
+        ++this.pieceCount[(this.chess.turn() === WHITE ? BLACK : WHITE) + move.captured]
       }
       this.variations.undo();
       this.clearAnnotations();
@@ -550,14 +550,14 @@ export class chess_aa {
         case "b": break;
         case "e":
           let ep_square;
-          if ((this.chess.turn() == WHITE && this.whiteDown) || (this.chess.turn() == BLACK && !this.whiteDown))
+          if ((this.chess.turn() === WHITE && this.whiteDown) || (this.chess.turn() === BLACK && !this.whiteDown))
             ep_square = target + 8;
           else
             ep_square = target - 8;
           this.newPiece(this.chess.get(this.squareNames[ep_square]), ep_square);
           break;
         case "k":
-          if (this.chess.turn() == WHITE) {
+          if (this.chess.turn() === WHITE) {
             rookTarget = this.squareNamesMap["h1"];
             rookSource = this.squareNamesMap["f1"];
           } 
@@ -568,7 +568,7 @@ export class chess_aa {
           this.movePiece(rookSource,rookTarget);
           break;
         case "q":
-          if (this.chess.turn() == WHITE) {
+          if (this.chess.turn() === WHITE) {
             rookTarget = this.squareNamesMap["a1"];
             rookSource = this.squareNamesMap["d1"];
           } 
@@ -583,7 +583,7 @@ export class chess_aa {
         case "p":
         case "np":
         case "pn":
-          if (this.chess.turn() == WHITE) {
+          if (this.chess.turn() === WHITE) {
             img.src = this.whitePawnSVG;
           }
           else {
@@ -632,7 +632,7 @@ export class chess_aa {
     let commonNode = -1;
     // find common nodes in the movetree
     for (let i=0; i<currentAddress.length; ++i) {
-      if (currentAddress[i] == address[i]) {
+      if (currentAddress[i] === address[i]) {
         ++commonNode;
       }
       else {
@@ -740,9 +740,9 @@ export class chess_aa {
     let that = this;
     return function(event) {
       let img = event.currentTarget;
-      if (event.button == 0 || event.targetTouches) {
+      if (event.button === 0 || event.targetTouches) {
         that.clearAnnotations();
-        if (that.chess.game_over() || (that.mode == "play" && that.player != that.chess.turn())) {
+        if (that.chess.game_over() || (that.mode === "play" && that.player != that.chess.turn())) {
           return;
         }
         let source = img.dataset.square;
@@ -883,7 +883,7 @@ export class chess_aa {
   draw() {
     let that = this;
     return function(event) {
-      if (event.button == 2) {
+      if (event.button === 2) {
         let rect = that.chessboard.getBoundingClientRect();
         let source = Math.floor((event.clientX-rect.left)/that.chessboard.offsetWidth*8) + Math.floor((event.clientY-rect.top)/that.chessboard.offsetHeight*8)*8;
 
@@ -893,7 +893,7 @@ export class chess_aa {
           let target;
           if (x >= 0 && x < 8 && y >= 0 && y < 8) {
             target = y * 8 + x;
-            if (target == source) {
+            if (target === source) {
               if (e.ctrlKey)
                 that.highlightSVG(target,that.highlightedSquareColor2);
               else if (e.altKey)
@@ -939,7 +939,7 @@ export class chess_aa {
         path.setAttribute("width", 1);
         path.setAttribute("height", 1);
         path.style.strokeWidth = "0";
-        if ((i+j) % 2 == 0) {
+        if ((i+j) % 2 === 0) {
           path.style.fill = this.whiteSquareColor;
           path.dataset.color = "white";
         }
@@ -1001,7 +1001,7 @@ export class chess_aa {
       rank.setAttribute("x", 0);
       rank.setAttribute("y", i+0.25);
       rank.setAttribute("font-size","1.7%");
-      rank.style.fill = i%2==0 ? this.blackSquareColor : this.whiteSquareColor;
+      rank.style.fill = i%2===0 ? this.blackSquareColor : this.whiteSquareColor;
       rank.style.fontFamily = "sans-serif";
       rank.textContent = 8-i;
       rank.classList.add("chess-aa-rankname");
@@ -1012,7 +1012,7 @@ export class chess_aa {
       file.setAttribute("y", 7.93);
       file.setAttribute("text-anchor","end");
       file.setAttribute("font-size","1.7%");
-      file.style.fill = i%2==0 ? this.whiteSquareColor : this.blackSquareColor;
+      file.style.fill = i%2===0 ? this.whiteSquareColor : this.blackSquareColor;
       file.style.fontFamily = "sans-serif";
       file.textContent = "abcdefgh"[i];
       file.classList.add("chess-aa-filename");
@@ -1026,7 +1026,7 @@ export class chess_aa {
     // delete existing arrow
     for (let k=0; k<this.arrows.length; k++) {
       let x = this.arrows[k];
-      if (x.source == i && x.target == j) {
+      if (x.source === i && x.target === j) {
         x.svg.remove();
         this.arrows.splice(k,1);
         return;
@@ -1053,13 +1053,13 @@ export class chess_aa {
     path.setAttribute("y2", targetrank + 0.5 - ydeviation*1.2);
     path.style.strokeWidth = "0.15";
     path.style.opacity = 0.6;
-    if (sty==1)
+    if (sty===1)
       path.style.stroke = this.arrowColor;
-    else if (sty==2)
+    else if (sty===2)
       path.style.stroke = this.highlightedSquareColor1;
-    else if (sty==3)
+    else if (sty===3)
       path.style.stroke = this.highlightedSquareColor2;
-    else if (sty==4)
+    else if (sty===4)
       path.style.stroke = this.highlightedSquareColor3;
     else {
       console.log("unknown style for arrow");
@@ -1159,8 +1159,8 @@ export class chess_aa {
       x = this.topSVG.getElementsByClassName("chess-aa-rankname");
       y = this.topSVG.getElementsByClassName("chess-aa-filename");
       for (let i=0; i<x.length; ++i) {
-        x[i].style.fill = i%2==0 ? this.blackSquareColor : this.whiteSquareColor;
-        y[i].style.fill = i%2==0 ? this.whiteSquareColor : this.blackSquareColor;
+        x[i].style.fill = i%2===0 ? this.blackSquareColor : this.whiteSquareColor;
+        y[i].style.fill = i%2===0 ? this.whiteSquareColor : this.blackSquareColor;
       }
     }
     if (config.arrowColor) {
@@ -1221,7 +1221,7 @@ export class chess_aa {
       for (let i=0; i<64; i++) {
         let piece = this.chess.get(this.squareNames[i]);
         let color = this.chess.turn();
-        if (piece && piece.type == KING && piece.color == color) {
+        if (piece && piece.type === KING && piece.color === color) {
           this.cellAnnotations(i,"inCheck");
         }
       }
@@ -1229,13 +1229,13 @@ export class chess_aa {
   }
 
   flipBoard() {
-    if (this.mode == "play") {
+    if (this.mode === "play") {
       if (this.chess.history().length != 0) {
         // Only allow flipping the board when the game has not started
         return;
       }
       this.player = this.whiteDown ? BLACK : WHITE;
-      if (this.player == BLACK) {
+      if (this.player === BLACK) {
         this.requestMove();
       }
     }
@@ -1307,10 +1307,10 @@ export class chess_aa {
   keyboardCommands() {
     let that = this;
     return function (event) {
-      if (that.mode == "play") {
-        if (event.code == "ArrowLeft") {
+      if (that.mode === "play") {
+        if (event.code === "ArrowLeft") {
           let address = that.variations.address();
-          if (that.player == that.chess.turn() && address.length > 1) {
+          if (that.player === that.chess.turn() && address.length > 1) {
             that.removeVariationAtAddress(address.slice(0,address.length - 1));
           }
           else if (address.length > 0) {
@@ -1321,11 +1321,11 @@ export class chess_aa {
         }
       }
       else {
-        if (event.code == "ArrowLeft") {
+        if (event.code === "ArrowLeft") {
           that.unmakeMove(true);
           return false;
         }
-        else if (event.code == "ArrowRight") {
+        else if (event.code === "ArrowRight") {
           let move = that.variations.moveAtBranch(0);
           that.makeMove(move,true);
           return false;
@@ -1343,7 +1343,7 @@ export class chess_aa {
   }
 
   switchSound(onoff) {
-    if (onoff == this.soundOn) return;
+    if (onoff === this.soundOn) return;
     if (onoff) {
       this.soundOn = true;
       this.audioContext = new AudioContext();

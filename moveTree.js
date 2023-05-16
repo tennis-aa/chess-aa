@@ -9,7 +9,7 @@ export class moveTree {
   }
 
   add(move) {
-    if (this.activeBranch == -1) {
+    if (this.activeBranch === -1) {
       this.children.push( new moveTree(move, this.halfmove + 1) );
       this.activeBranch = this.children.length - 1;
     }
@@ -19,7 +19,7 @@ export class moveTree {
   }
 
   undo() {
-    if (this.activeBranch == -1) {
+    if (this.activeBranch === -1) {
       return true;
     }
     else {
@@ -31,7 +31,7 @@ export class moveTree {
   }
 
   redo(branch) {
-    if (this.activeBranch == -1) {
+    if (this.activeBranch === -1) {
       if (branch < this.children.length && branch >= 0) {
         this.activeBranch = branch;
         this.children[branch].activeBranch = -1;
@@ -47,7 +47,7 @@ export class moveTree {
   }
 
   moveAtBranch(branch = 0) {
-    if (this.activeBranch == -1) {
+    if (this.activeBranch === -1) {
       if (branch < this.children.length && branch >= 0){
         return this.children[branch].move;
       }
@@ -70,7 +70,7 @@ export class moveTree {
   }
 
   addAt(move,address) {
-    if (address.length == 0) {
+    if (address.length === 0) {
       this.children.push( new moveTree(move, this.halfmove + 1) );
       return true;
     }
@@ -83,7 +83,7 @@ export class moveTree {
   }
 
   remove() {
-    if (this.activeBranch == -1) {
+    if (this.activeBranch === -1) {
       return true;
     }
     else {
@@ -96,9 +96,9 @@ export class moveTree {
   }
 
   removeAt(address) {
-    if (address.length == 1 && address[0] < this.children.length) {
+    if (address.length === 1 && address[0] < this.children.length) {
       this.children.splice(address[0],1);
-      if (this.activeBranch == address[0]) {
+      if (this.activeBranch === address[0]) {
         this.activeBranch = -1;
       }
       else if (this.activeBranch > address[0]) {
@@ -115,7 +115,7 @@ export class moveTree {
   }
 
   address() {
-    if (this.activeBranch == -1) {
+    if (this.activeBranch === -1) {
       return [];
     }
     else {
@@ -126,7 +126,7 @@ export class moveTree {
   }
 
   addressLastMain() {
-    if (this.children.length == 0) {
+    if (this.children.length === 0) {
       return [];
     }
     else {
@@ -138,7 +138,7 @@ export class moveTree {
 
   activeMoves() {
     let result;
-    if (this.activeBranch == -1) {
+    if (this.activeBranch === -1) {
       result = [];
     }
     else {
@@ -151,7 +151,7 @@ export class moveTree {
   }
 
   activeMove() {
-    if (this.activeBranch == -1) {
+    if (this.activeBranch === -1) {
       return this.move;
     }
     else {
@@ -160,7 +160,7 @@ export class moveTree {
   }
 
   moveAt(address) {
-    if (address.length == 0) {
+    if (address.length === 0) {
       return this.move;
     }
     else if (address[0] >= this.children.length || address[0] < 0) {
@@ -172,7 +172,7 @@ export class moveTree {
   }
 
   getChildren() {
-    if (this.activeBranch == -1) {
+    if (this.activeBranch === -1) {
       return this.children;
     }
     else {
@@ -181,7 +181,7 @@ export class moveTree {
   }
 
   getChildrenAt(address) {
-    if (address.length == 0) {
+    if (address.length === 0) {
       return this.children;
     }
     else if (address[0] >= this.children.length || address[0] < 0) {
@@ -193,7 +193,7 @@ export class moveTree {
   }
 
   activeHalfmove() {
-    if (this.activeBranch == -1) {
+    if (this.activeBranch === -1) {
       return this.halfmove;
     }
     else {
@@ -202,7 +202,7 @@ export class moveTree {
   }
 
   halfmoveAt(address) {
-    if (address.length == 0) {
+    if (address.length === 0) {
       return this.halfmove;
     }
     else if (address[0] >= this.children.length || address[0] < 0) {
@@ -214,7 +214,7 @@ export class moveTree {
   }
 
   activateAddress(address) {
-    if (address.length == 0) {
+    if (address.length === 0) {
       this.activeBranch = -1;
       return true;
     }
@@ -232,7 +232,7 @@ export class moveTree {
   }
 
   addressExists(address) {
-    if (address.length==0) {
+    if (address.length===0) {
       return true;
     }
     else if (address[0] >= this.children.length || address[0] < 0) {
@@ -244,7 +244,7 @@ export class moveTree {
   }
 
   numberOfBranches() {
-    if (this.activeBranch == -1) {
+    if (this.activeBranch === -1) {
       return this.children.length;
     }
     else {
@@ -253,7 +253,7 @@ export class moveTree {
   }
 
   numberOfBranchesAt(address) {
-    if (address.length == 0) {
+    if (address.length === 0) {
       return this.children.length;
     }
     else if (address[0] >= this.children.length || address[0] < 0) {
@@ -265,10 +265,10 @@ export class moveTree {
   }
 
   level() {
-    if (this.activeBranch == -1) {
+    if (this.activeBranch === -1) {
       return 0;
     }
-    else if (this.activeBranch == 0) {
+    else if (this.activeBranch === 0) {
       return this.children[this.activeBranch].level();
     }
     else {
@@ -277,18 +277,18 @@ export class moveTree {
   }
 
   levelAt(address) {
-    if (address.length == 0) {
+    if (address.length === 0) {
       return 0;
     }
     else if (address[0] >= this.children.length || address[0] < 0) {
       return null;
     }
-    else if (address[0] == 0) {
+    else if (address[0] === 0) {
       return this.children[address[0]].levelAt(address.slice(1));
     }
     else {
       let x = this.children[address[0]].levelAt(address.slice(1));
-      if (x == null)
+      if (x === null)
         return null
       else
         return 1 + x;
@@ -324,7 +324,7 @@ export class moveTree {
 
   toPGN(forceMoveNumber=true) {
     let result = "";
-    if (this.move == null) { // this only happens at the root of the tree
+    if (this.move === null) { // this only happens at the root of the tree
       // we print the comments before the start of the game
       for (let i=0; i<this.comment.length; ++i) {
         result += "{" + this.comment[i] + "} ";
@@ -332,7 +332,7 @@ export class moveTree {
     }
     // write main line move
     if (this.children.length>0) {
-      if (this.children[0].halfmove % 2 == 1) {
+      if (this.children[0].halfmove % 2 === 1) {
         result += (this.children[0].halfmove+1)/2 + ". ";
       }
       else if (forceMoveNumber) {
@@ -341,7 +341,7 @@ export class moveTree {
       result += this.children[0].move.san + " ";
       for (let i=0; i<this.children[0].annotation.length; ++i) {
         // we skip the space after the move for suffix annotations
-        if (i==0 && ["!", "?", "!!", "!?", "?!","??"].includes(this.children[0].annotation[i])) result = result.slice(0,-1);
+        if (i === 0 && ["!", "?", "!!", "!?", "?!","??"].includes(this.children[0].annotation[i])) result = result.slice(0,-1);
         result += this.children[0].annotation[i] + " ";
       }
       for (let i=0; i<this.children[0].comment.length; ++i) {
@@ -351,7 +351,7 @@ export class moveTree {
     // write variations
     for (let i=1; i < this.children.length; i++) {
       result += "(";
-      if (this.children[i].halfmove % 2 == 1) {
+      if (this.children[i].halfmove % 2 === 1) {
         result += (this.children[i].halfmove+1)/2 + ". ";
       }
       else {
@@ -360,7 +360,7 @@ export class moveTree {
       result += this.children[i].move.san + " ";
       for (let j=0; j<this.children[i].annotation.length; ++j) {
         // we skip the space after the move for suffix annotations
-        if (j==0 && ["!", "?", "!!", "!?", "?!","??"].includes(this.children[0].annotation[i])) result = result.slice(0,-1);
+        if (j===0 && ["!", "?", "!!", "!?", "?!","??"].includes(this.children[0].annotation[i])) result = result.slice(0,-1);
         result += this.children[i].annotation[j] + " ";
       }
       for (let j=0; j<this.children[i].comment.length; ++j) {
@@ -381,14 +381,14 @@ export class moveTree {
 
   toPGNMain(withcomments=false,forceMoveNumber=true) {
     let result = "";
-    if (withcomments && this.move == null) { // this only happens at the root of the tree
+    if (withcomments && this.move === null) { // this only happens at the root of the tree
       // we print the comments before the start of the game
       for (let i=0; i<this.comment.length; ++i) {
         result += "{" + this.comment[i] + "} ";
       }
     }
     if (this.children.length>0) {
-      if (this.children[0].halfmove % 2 == 1) {
+      if (this.children[0].halfmove % 2 === 1) {
         result += (this.children[0].halfmove+1)/2 + ". ";
       }
       else if (forceMoveNumber) {
@@ -398,7 +398,7 @@ export class moveTree {
       if (withcomments){
         for (let i=0; i<this.children[0].annotation.length; ++i) {
           // we skip the space after the move for suffix annotations
-          if (i==0 && ["!", "?", "!!", "!?", "?!","??"].includes(this.children[0].annotation[i])) result = result.slice(0,-1);
+          if (i===0 && ["!", "?", "!!", "!?", "?!","??"].includes(this.children[0].annotation[i])) result = result.slice(0,-1);
           result += this.children[0].annotation[i] + " ";
         }
         for (let i=0; i<this.children[0].comment.length; ++i) {
@@ -411,7 +411,7 @@ export class moveTree {
   }
 
   addComment(s) {
-    if (this.activeBranch == -1) {
+    if (this.activeBranch === -1) {
       this.comment.push(s);
     }
     else {
@@ -420,8 +420,8 @@ export class moveTree {
   }
 
   deleteComment(index) {
-    if (this.activeBranch == -1) {
-      if (index == null) {
+    if (this.activeBranch === -1) {
+      if (index === null) {
         index = this.comment.length-1;
       }
       if (this.comment.length > index) {
@@ -434,7 +434,7 @@ export class moveTree {
   }
 
   deleteAllComments() {
-    if (this.activeBranch == -1) {
+    if (this.activeBranch === -1) {
         this.comment.length = 0;
     }
     else {
@@ -443,7 +443,7 @@ export class moveTree {
   }
 
   getComment(index=0) {
-    if (this.activeBranch == -1) {
+    if (this.activeBranch === -1) {
       if (this.comment.length > index) {
         return this.comment[index];
       }
@@ -454,7 +454,7 @@ export class moveTree {
   }
 
   getComments() {
-    if (this.activeBranch == -1) {
+    if (this.activeBranch === -1) {
         return this.comment.slice();
     }
     else {
@@ -463,7 +463,7 @@ export class moveTree {
   }
 
   addCommentAt(s,address) {
-    if (address.length == 0) {
+    if (address.length === 0) {
       this.comment.push(s);
       return true;
     }
@@ -476,8 +476,8 @@ export class moveTree {
   }
 
   deleteCommentAt(address,index) {
-    if (address.length == 0) {
-      if (index == null) {
+    if (address.length === 0) {
+      if (index === null) {
         index = this.comment.length-1;
       }
       if (index < this.comment.length) {
@@ -497,7 +497,7 @@ export class moveTree {
   }
 
   deleteAllCommentsAt(address) {
-    if (address.length == 0) {
+    if (address.length === 0) {
         this.comment.length = 0;
         return true;
     }
@@ -510,7 +510,7 @@ export class moveTree {
   }
 
   getCommentAt(address,index=0) {
-    if (address.length == 0) {
+    if (address.length === 0) {
       if (index < this.comment.length) {
         return this.comment[index];
       }
@@ -526,7 +526,7 @@ export class moveTree {
   }
 
   getCommentsAt(address) {
-    if (address.length == 0) {
+    if (address.length === 0) {
         return this.comment.slice();
     }
     else if (address[0] >= this.children.length || address[0] < 0) {
@@ -547,7 +547,7 @@ export class moveTree {
   addAnnotation(s) {
     if (!"$?!".includes(s.slice(0,1)))
       return;
-    if (this.activeBranch == -1) {
+    if (this.activeBranch === -1) {
       this.annotation.push(s);
     }
     else {
@@ -556,8 +556,8 @@ export class moveTree {
   }
 
   deleteAnnotation(index) {
-    if (this.activeBranch == -1) {
-      if (index == null) {
+    if (this.activeBranch === -1) {
+      if (index === null) {
         index = this.annotation.length-1;
       }
       if (this.annotation.length > index) {
@@ -570,7 +570,7 @@ export class moveTree {
   }
 
   deleteAllAnnotations() {
-    if (this.activeBranch == -1) {
+    if (this.activeBranch === -1) {
         this.annotation.length = 0;
     }
     else {
@@ -579,7 +579,7 @@ export class moveTree {
   }
 
   getAnnotation(index=0) {
-    if (this.activeBranch == -1) {
+    if (this.activeBranch === -1) {
       if (this.annotation.length > index) {
         return this.annotation[index];
       }
@@ -590,7 +590,7 @@ export class moveTree {
   }
 
   getAnnotations() {
-    if (this.activeBranch == -1) {
+    if (this.activeBranch === -1) {
         return this.annotation.slice();
     }
     else {
@@ -601,7 +601,7 @@ export class moveTree {
   addAnnotationAt(s,address) {
     if (!"$?!".includes(s.slice(0,1)))
       return;
-    if (address.length == 0) {
+    if (address.length === 0) {
       this.annotation.push(s);
       return true;
     }
@@ -614,8 +614,8 @@ export class moveTree {
   }
 
   deleteAnnotationAt(address,index) {
-    if (address.length == 0) {
-      if (index == null) {
+    if (address.length === 0) {
+      if (index === null) {
         index = this.annotation.length-1;
       }
       if (index < this.annotation.length) {
@@ -635,7 +635,7 @@ export class moveTree {
   }
 
   deleteAllAnnotationsAt(address) {
-    if (address.length == 0) {
+    if (address.length === 0) {
         this.annotation.length = 0;
         return true;
     }
@@ -648,7 +648,7 @@ export class moveTree {
   }
 
   getAnnotationAt(address,index=0) {
-    if (address.length == 0) {
+    if (address.length === 0) {
       if (index < this.annotation.length) {
         return this.annotation[index];
       }
@@ -664,7 +664,7 @@ export class moveTree {
   }
 
   getAnnotationsAt(address) {
-    if (address.length == 0) {
+    if (address.length === 0) {
         return this.annotation.slice();
     }
     else if (address[0] >= this.children.length || address[0] < 0) {

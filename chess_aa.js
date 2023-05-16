@@ -754,7 +754,7 @@ export class chess_aa {
   }
 
   deleteAnnotationAt(address,index) {
-    this.variations.deleteAnnotation(address,index);
+    this.variations.deleteAnnotationAt(address,index);
     let event = new CustomEvent("chess-aa-deletedannotation",{detail:{address: address, index: index}});
     this.dispatcher.dispatchEvent(event);
   }

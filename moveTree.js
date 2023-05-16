@@ -547,19 +547,30 @@ export class moveTree {
     }
   }
 
-  isvalidAnnotation(s) {
-    if (["!", "?", "!!", "!?", "?!","??"].includes(s) && this.annotation.length === 0) return true;
+  typeAnnotation(s) {
+    if (["!", "?", "!!", "!?", "?!","??"].includes(s)) return "san";
     else if (s.startsWith("$")) {
       let n = Number(s.slice(1));
       if (n && Number.isInteger(n) && n >= 0 && n < 256) 
-        return true
+        return "nag";
     }
-    return false;
+    return null;
   }
 
   addAnnotation(s) {
     if (this.activeBranch === -1) {
-      if (this.isvalidAnnotation(s)) {
+      let type = this.typeAnnotation(s);
+      if (type === null) return false;
+      else if (type === "san" && this.annotation.length > 0) {
+        if (this.typeAnnotation(this.annotation[0]) === "san") {
+          this.annotation[0] = s;
+        }
+        else {
+          this.annotation.unshift(s);
+        }
+        return true;
+      }
+      else {
         this.annotation.push(s);
         return true;
       }
@@ -617,7 +628,18 @@ export class moveTree {
 
   addAnnotationAt(s,address) {
     if (address.length === 0) {
-      if (this.isvalidAnnotation(s)) {
+      let type = this.typeAnnotation(s);
+      if (type === null) return false;
+      else if (type === "san" && this.annotation.length > 0) {
+        if (this.typeAnnotation(this.annotation[0]) === "san") {
+          this.annotation[0] = s;
+        }
+        else {
+          this.annotation.unshift(s);
+        }
+        return true;
+      }
+      else {
         this.annotation.push(s);
         return true;
       }

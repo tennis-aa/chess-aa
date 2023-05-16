@@ -23,19 +23,22 @@ export class variationbox {
     this.dialog.style.border = "none";
     this.dialog.style.borderRadius = "5px";
     this.dialog.style.textAlign = "right";
-    this.dialog.textContent = "Delete move ";
-    this.dialogMoveSpan = document.createElement("span");
-    this.dialog.appendChild(this.dialogMoveSpan);
-    this.dialog.append(" and all subsequent moves in the variation?")
-    this.dialog.appendChild(document.createElement("div"));
-    this.dialogConfirm = document.createElement("button");
-    this.dialogConfirm.textContent = "Yes";
-    this.dialogConfirm.style.margin = "10px 5px 0 0";
-    this.dialogCancel = document.createElement("button");
-    this.dialogCancel.textContent = "No";
-    this.dialogCancel.onclick = this.closeDialogHandler();
-    this.dialog.appendChild(this.dialogConfirm);
-    this.dialog.appendChild(this.dialogCancel);
+    this.dialog.style.position = "absolute";
+    this.dialog.style.marginTop = "0%";
+    this.dialog.style.marginLeft = "0%";
+    this.dialog.style.padding = "2px";
+    this.dialogDiv = this.dialog.appendChild(document.createElement("div"));
+    this.dialogDiv.onclick = function(e) {e.stopPropagation()};
+    this.dialogMoveSpan = this.dialogDiv.appendChild(document.createElement("span"));
+    this.dialogAnnotation = this.dialogDiv.appendChild(document.createElement("select"));
+    let annotations = ["","!", "?", "!!", "!?", "?!","??"];
+    for (let i=0; i<annotations.length;++i) {
+      let a = this.dialogAnnotation.appendChild(document.createElement("option"));
+      a.textContent = annotations[i];
+    }
+    this.dialogDelete = this.dialogDiv.appendChild(document.createElement("button"));
+    this.dialogDelete.textContent = "Delete";
+    this.dialog.onclick = this.closeDialogHandler();
 
     this.div.appendChild(this.dialog);
 
@@ -48,6 +51,9 @@ export class variationbox {
     chess_aa.dispatcher.addEventListener("chess-aa-addedcomment", this.updateCommentHandler());
     chess_aa.dispatcher.addEventListener("chess-aa-deletedcomment", this.updateCommentHandler());
     chess_aa.dispatcher.addEventListener("chess-aa-clearcomments", this.updateCommentHandler());
+    chess_aa.dispatcher.addEventListener("chess-aa-addedannotation", this.updateAnnotationHandler());
+    chess_aa.dispatcher.addEventListener("chess-aa-deletedannotation", this.updateAnnotationHandler());
+    chess_aa.dispatcher.addEventListener("chess-aa-clearannotations", this.updateAnnotationHandler());
   }
 
   add(move,newaddress) {
@@ -59,6 +65,7 @@ export class variationbox {
       // new move (as opposed to an existing move that was redone)
       span = document.createElement("span");
       span.style.cursor = "pointer";
+      span.style.paddingRight = "5px";
       span.setAttribute("data-address",JSON.stringify(address));
       let halfmove = this.chess_aa.variations.halfmoveAt(address);
       let branch = address[address.length-1];
@@ -71,10 +78,10 @@ export class variationbox {
       if (address.length === 1 && branch === 0) {// First move
         this.variationsDiv.appendChild(span);
         if (halfmove % 2 === 1) {
-          text += (halfmove+1)/2 + ". " + move.san + " ";
+          text += (halfmove+1)/2 + "." + move.san;
         }
         else {
-          text += halfmove/2 + "... " + move.san + " ";
+          text += halfmove/2 + "..." + move.san;
         }
         span.textContent = text;
       }
@@ -110,10 +117,10 @@ export class variationbox {
         prev.after(variationspan);
 
         if (halfmove % 2 === 1) {
-          text += (halfmove+1)/2 + ". " + move.san + " ";
+          text += (halfmove+1)/2 + "." + move.san;
         }
         else {
-          text += halfmove/2 + "... " + move.san + " ";
+          text += halfmove/2 + "..." + move.san;
         }
         span.textContent = text;
 
@@ -124,7 +131,7 @@ export class variationbox {
           if (prev) {
             let s = prev.textContent;
             if (!/[0-9]/.test(s[0])) // if s does not have the movenumber alredy
-              prev.textContent = ((halfmove+1)/2) + "... " + s;
+              prev.textContent = ((halfmove+1)/2) + "..." + s;
           }
         }
       }
@@ -147,13 +154,13 @@ export class variationbox {
         }
 
         if (halfmove % 2 === 1) {
-          text += (halfmove+1)/2 + ". " + move.san + " ";
+          text += (halfmove+1)/2 + "." + move.san + " ";
         }
         else if (address[address.length-2] === 0 && nbranches > 1) {
-          text += halfmove/2 + "... " + move.san + " ";
+          text += halfmove/2 + "..." + move.san + " ";
         }
         else {
-          text += move.san + " ";
+          text += move.san;
         }
         span.textContent = text;
       }
@@ -164,8 +171,10 @@ export class variationbox {
         that.chess_aa.gotoAddress(address);
         that.chess_aa.focus();
       };
-      span.oncontextmenu = function() {
-        that.showDialog(that.chess_aa.variations.moveAt(address).san, address);
+      span.oncontextmenu = function(e) {
+        that.dialog.style.left = e.clientX + "px";
+        that.dialog.style.top = e.clientY + "px";
+        that.showDialog(span.textContent, address);
         return false;
       };
       // // You can add a tooltip with the comment using the following event handlers
@@ -183,7 +192,6 @@ export class variationbox {
 
       // Highlight current move and show comments
       span.style.backgroundColor = "yellow";
-      this.commentCurrentMoveDiv.textContent = this.chess_aa.variations.getCommentsAt(address).join(" ");
       prevaddress = address.slice(0,address.length-1);
       if (prevaddress.length > 0) {
         prev = this.variationsDiv.querySelector("[data-address='" + JSON.stringify(prevaddress) + "']");
@@ -193,13 +201,14 @@ export class variationbox {
     else {
       // highlighting when move is redone instead of added
       span.style.backgroundColor = "yellow";
-      this.commentCurrentMoveDiv.textContent = this.chess_aa.variations.getCommentsAt(address).join(" ");
       if (addressBefore.length > 0) {
         span = this.variationsDiv.querySelector("[data-address='" + JSON.stringify(addressBefore) + "']");
         span.style.backgroundColor = "";
       }
     }
     this.activeAddress = [...address];
+    this.updateComment();
+    this.updateAnnotation(this.activeAddress);
   }
 
   addHandler() {
@@ -221,7 +230,7 @@ export class variationbox {
       span.style.backgroundColor = "";
     }
     this.activeAddress.pop();
-    this.commentCurrentMoveDiv.textContent = this.chess_aa.variations.getCommentsAt(this.activeAddress).join(" ");
+    this.updateComment();
     if (this.activeAddress.length > 0){
       span = this.variationsDiv.querySelector("[data-address='" + JSON.stringify(this.activeAddress) + "']");
       span.style.backgroundColor = "yellow";
@@ -250,12 +259,12 @@ export class variationbox {
     }
     recur(this.chess_aa.variations,[]);
     let address = this.chess_aa.variations.address();
-    this.commentCurrentMoveDiv.textContent = this.chess_aa.variations.getCommentsAt(address).join(" ");
     if (address.length > 0) {
       let span = this.variationsDiv.querySelector("[data-address='" + JSON.stringify(address) + "']");
       span.style.backgroundColor = "yellow";
     }
     this.activeAddress = address;
+    this.updateComment();
   }
 
   restartHandler() {
@@ -275,14 +284,49 @@ export class variationbox {
       that.updateComment();
     }
   }
+  
+  updateAnnotation(address) {
+    let span = this.variationsDiv.querySelector("[data-address='" + JSON.stringify(address) + "']");
+    let text = span.textContent;
+    while (["!","?"].includes(text[text.length - 1])) text = text.slice(0,-1);
+    let ann = this.chess_aa.variations.getAnnotationAt(address);
+    if (ann && this.chess_aa.variations.typeAnnotation(ann) === "san")
+      text += ann;
+    span.textContent = text;
+  }
+
+  updateAnnotationHandler() {
+    let that = this;
+    return function(event) {
+      that.updateAnnotation(event.detail.address);
+    }
+  }
 
   showDialog(move, address) {
-    this.dialogMoveSpan.textContent = move;
+    this.dialogMoveSpan.textContent = move + " ";
     let that = this;
-    this.dialogConfirm.onclick = function (e) {
+    this.dialogDelete.onclick = function (e) {
       that.remove(address);
       that.dialog.close();
       that.chess_aa.focus();
+      return false;
+    }
+    let s = this.chess_aa.variations.getAnnotationAt(address);
+    if (s !== null && this.chess_aa.variations.typeAnnotation(s) === "san") {
+      this.dialogAnnotation.value = s;
+    }
+    else {
+      this.dialogAnnotation.value = "";
+    }
+    this.dialogAnnotation.onchange = function (e) {
+      let val = that.dialogAnnotation.value;
+      if (val === "") {
+        that.chess_aa.deleteAnnotationAt(address,0);
+      }
+      else {
+        that.chess_aa.addAnnotationAt(val,address);
+      }
+      that.dialog.close();
     }
     this.dialog.showModal();
   }
@@ -294,5 +338,4 @@ export class variationbox {
       that.chess_aa.focus();
     }
   }
-
 }

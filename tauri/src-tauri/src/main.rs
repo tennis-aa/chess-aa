@@ -34,6 +34,15 @@ fn uci_cmd(command: String, engine: tauri::State<Engine>) {
 }
 
 #[tauri::command]
+fn terminate_engine(engine: tauri::State<Engine>) {
+    let mut child = engine.child.lock().unwrap();
+    let y = child.take();
+    if let Some(x) = y {
+        x.kill().expect("could not kill engine child process");
+    }
+}
+
+#[tauri::command]
 fn launch_engine(app_handle: AppHandle) {
     // Retrieve engine components from managed state
     let engine = app_handle.state::<Engine>();
@@ -230,7 +239,7 @@ fn main() {
     tauri::Builder::default()
         .manage(Engine {child: Mutex::new(None), index: Mutex::new(None)})
         .manage(Mutex::new(EngineCandidatePath("".to_string())))
-        .invoke_handler(tauri::generate_handler![uci_cmd,launch_engine,register_engine,
+        .invoke_handler(tauri::generate_handler![uci_cmd,terminate_engine,launch_engine,register_engine,
             switch_engine,select_engine_if_none,delete_engine])
         .setup(|app| {
             let window = WindowBuilder::new(

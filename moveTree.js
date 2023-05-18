@@ -514,7 +514,7 @@ export class moveTree {
 
   getCommentAt(address,index=0) {
     if (address.length === 0) {
-      if (index < this.comment.length) {
+      if (index >= 0 && index < this.comment.length) {
         return this.comment[index];
       }
       else
@@ -525,6 +525,23 @@ export class moveTree {
     }
     else {
       return this.children[address[0]].getCommentAt(address.slice(1),index);
+    }
+  }
+
+  editCommentAt(s,address,index=0) {
+    if (address.length === 0) {
+      if (index >= 0 && index < this.comment.length) {
+        this.comment[index] = s;
+        return true;
+      }
+      else
+        return false;
+    }
+    else if (address[0] >= this.children.length || address[0] < 0) {
+      return false;
+    }
+    else {
+      return this.children[address[0]].editCommentAt(s,address.slice(1),index);
     }
   }
 

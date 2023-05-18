@@ -22,12 +22,12 @@ export class variationbox {
     this.dialog = document.createElement("dialog");
     this.dialog.style.border = "none";
     this.dialog.style.borderRadius = "5px";
-    this.dialog.style.textAlign = "right";
     this.dialog.style.position = "absolute";
     this.dialog.style.marginTop = "0%";
     this.dialog.style.marginLeft = "0%";
-    this.dialog.style.padding = "2px";
+    this.dialog.style.padding = "5px";
     this.dialogDiv = this.dialog.appendChild(document.createElement("div"));
+    this.dialogDiv.style.width = "170px";
     this.dialogDiv.onclick = function(e) {e.stopPropagation()};
     this.dialogMoveSpan = this.dialogDiv.appendChild(document.createElement("span"));
     this.dialogAnnotation = this.dialogDiv.appendChild(document.createElement("select"));
@@ -38,6 +38,7 @@ export class variationbox {
     }
     this.dialogDelete = this.dialogDiv.appendChild(document.createElement("button"));
     this.dialogDelete.textContent = "Delete";
+    this.dialogComments = this.dialogDiv.appendChild(document.createElement("div"));
     this.dialog.onclick = this.closeDialogHandler();
 
     this.div.appendChild(this.dialog);
@@ -49,6 +50,7 @@ export class variationbox {
     chess_aa.dispatcher.addEventListener("chess-aa-newposition", this.restartHandler());
     chess_aa.dispatcher.addEventListener("chess-aa-variationremoval", this.restartHandler());
     chess_aa.dispatcher.addEventListener("chess-aa-addedcomment", this.updateCommentHandler());
+    chess_aa.dispatcher.addEventListener("chess-aa-editedcomment", this.updateCommentHandler());
     chess_aa.dispatcher.addEventListener("chess-aa-deletedcomment", this.updateCommentHandler());
     chess_aa.dispatcher.addEventListener("chess-aa-clearcomments", this.updateCommentHandler());
     chess_aa.dispatcher.addEventListener("chess-aa-addedannotation", this.updateAnnotationHandler());
@@ -154,10 +156,10 @@ export class variationbox {
         }
 
         if (halfmove % 2 === 1) {
-          text += (halfmove+1)/2 + "." + move.san + " ";
+          text += (halfmove+1)/2 + "." + move.san;
         }
         else if (address[address.length-2] === 0 && nbranches > 1) {
-          text += halfmove/2 + "..." + move.san + " ";
+          text += halfmove/2 + "..." + move.san;
         }
         else {
           text += move.san;
@@ -305,12 +307,14 @@ export class variationbox {
   showDialog(move, address) {
     this.dialogMoveSpan.textContent = move + " ";
     let that = this;
+    // delete
     this.dialogDelete.onclick = function (e) {
       that.remove(address);
       that.dialog.close();
       that.chess_aa.focus();
       return false;
     }
+    // Annotation
     let s = this.chess_aa.variations.getAnnotationAt(address);
     if (s !== null && this.chess_aa.variations.typeAnnotation(s) === "san") {
       this.dialogAnnotation.value = s;
@@ -328,6 +332,34 @@ export class variationbox {
       }
       that.dialog.close();
     }
+    // Comments
+    this.dialogComments.replaceChildren();
+    let comments = this.chess_aa.variations.getCommentsAt(address);
+    for (let i=0; i<comments.length; ++i) {
+      let text = this.dialogComments.appendChild(document.createElement("input"));
+      text.style.width = "120px";
+      text.value = comments[i];
+      text.onchange = function(e) {
+        if (text.value === "") {
+          that.chess_aa.deleteCommentAt(address,i);
+          that.dialog.close()
+        }
+        else {
+          that.chess_aa.editCommentAt(text.value,address,i);
+        }
+      };
+    }
+    let text = this.dialogComments.appendChild(document.createElement("input"));
+    text.style.width = "120px";
+    let button = this.dialogComments.appendChild(document.createElement("button"));
+    button.textContent = "Add";
+    button.onclick = function(e) {
+      if (text.value !== "") {
+        that.chess_aa.addCommentAt(text.value,address);
+        that.dialog.close();
+      }
+    }
+    // show dialog
     this.dialog.showModal();
   }
 

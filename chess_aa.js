@@ -741,6 +741,13 @@ export class chess_aa {
     return this.variations.getComments();
   }
 
+  editCommentAt(s, address, index) {
+    if (this.variations.editCommentAt(s, address, index)) {
+      let event = new CustomEvent("chess-aa-editedcomment",{detail:{comment: s, address: address, index: index}});
+      this.dispatcher.dispatchEvent(event);
+    }
+  }
+
   addAnnotationAt(s, address) {
     this.variations.addAnnotationAt(s,address);
     let event = new CustomEvent("chess-aa-addedannotation",{detail:{annotation: s, address: address}});

@@ -1,21 +1,41 @@
 export class moveTree {
+  #move;
+  #children;
+
   constructor(move = null, halfmove = 0) {
-    this.move = move ? {...move}: null;
-    this.children = [];
+    this.#move = move ? {...move}: null;
+    this.#children = [];
     this.activeBranch = -1;
     this.halfmove = halfmove;
     this.comment = [];
     this.annotation = [];
   }
 
-  add(move) {
+  #treeActive() {
     if (this.activeBranch === -1) {
-      this.children.push( new moveTree(move, this.halfmove + 1) );
-      this.activeBranch = this.children.length - 1;
+      return this;
     }
     else {
-      this.children[this.activeBranch].add(move);
+      return this.#children[this.activeBranch].#treeActive();
     }
+  }
+
+  #treeAt(address) {
+    if (address.length === 0) {
+      return this;
+    }
+    else if (address[0] >= this.#children.length || address[0] < 0) {
+      return null;
+    }
+    else {
+      return this.#children[address[0]].#treeAt(address.slice(1));
+    }
+  }
+
+  add(move) {
+    let tree = this.#treeActive();
+    tree.#children.push(new moveTree(move, tree.halfmove + 1));
+    tree.activeBranch = tree.#children.length - 1;
   }
 
   undo() {
@@ -23,7 +43,7 @@ export class moveTree {
       return true;
     }
     else {
-      if (this.children[this.activeBranch].undo()) {
+      if (this.#children[this.activeBranch].undo()) {
         this.activeBranch = -1;
       }
       return false;
@@ -31,54 +51,44 @@ export class moveTree {
   }
 
   redo(branch) {
-    if (this.activeBranch === -1) {
-      if (branch < this.children.length && branch >= 0) {
-        this.activeBranch = branch;
-        this.children[branch].activeBranch = -1;
-        return true;
-      }
-      else {
-        return false;
-      }
+    let tree = this.#treeActive();
+    if (branch < tree.#children.length && branch >= 0) {
+      tree.activeBranch = branch;
+      tree.#children[branch].activeBranch = -1;
+      return true;
     }
     else {
-      return this.children[this.activeBranch].redo(branch);
+      return false;
     }
   }
 
   moveAtBranch(branch = 0) {
-    if (this.activeBranch === -1) {
-      if (branch < this.children.length && branch >= 0){
-        return this.children[branch].move;
-      }
-      else {
-        return null;
-      }
+    let tree = this.#treeActive();
+    if (branch < tree.#children.length && branch >= 0){
+      return tree.#children[branch].#move;
     }
     else {
-      return this.children[this.activeBranch].moveAtBranch(branch);
+      return null;
     }
   }
 
   clear() {
-    this.children.length = 0;
+    this.#children.length = 0;
     this.activeBranch = -1
-    this.move = null;
+    this.#move = null;
     this.comment.length = 0;
     this.halfmove = 0;
     this.annotation.length = 0;
   }
 
   addAt(move,address) {
-    if (address.length === 0) {
-      this.children.push( new moveTree(move, this.halfmove + 1) );
+    let tree = this.#treeAt(address);
+    if (tree) {
+      tree.push( new moveTree(move, tree.halfmove + 1) );
       return true;
     }
-    else if (address[0] >= this.children.length || address[0] < 0) {
-      return false;
-    }
     else {
-      return this.children[address[0]].addAt(move,address.slice(1));
+      return false;
     }
   }
 
@@ -87,17 +97,17 @@ export class moveTree {
       return true;
     }
     else {
-      if (this.children[this.activeBranch].remove()) {
+      if (this.#children[this.activeBranch].remove()) {
         this.activeBranch = -1;
-        this.children.splice(address[0],1);
+        this.#children.splice(address[0],1);
       }
       return false;
     }
   }
 
   removeAt(address) {
-    if (address.length === 1 && address[0] < this.children.length) {
-      this.children.splice(address[0],1);
+    if (address.length === 1 && address[0] < this.#children.length) {
+      this.#children.splice(address[0],1);
       if (this.activeBranch === address[0]) {
         this.activeBranch = -1;
       }
@@ -106,11 +116,11 @@ export class moveTree {
       }
       return true;
     }
-    else if (address[0] >= this.children.length || address[0] < 0) {
+    else if (address[0] >= this.#children.length || address[0] < 0) {
       return false;
     }
     else {
-      return this.children[address[0]].removeAt(address.slice(1));
+      return this.#children[address[0]].removeAt(address.slice(1));
     }
   }
 
@@ -119,18 +129,18 @@ export class moveTree {
       return [];
     }
     else {
-      let a = this.children[this.activeBranch].address();
+      let a = this.#children[this.activeBranch].address();
       a.unshift(this.activeBranch);
       return a;
     }
   }
 
   addressLastMain() {
-    if (this.children.length === 0) {
+    if (this.#children.length === 0) {
       return [];
     }
     else {
-      let a = this.children[0].addressLastMain();
+      let a = this.#children[0].addressLastMain();
       a.unshift(0);
       return a;
     }
@@ -142,75 +152,59 @@ export class moveTree {
       result = [];
     }
     else {
-      result = this.children[this.activeBranch].activeMoves();
+      result = this.#children[this.activeBranch].activeMoves();
     }
-    if (this.move) {
-      result.unshift(this.move);
+    if (this.#move) {
+      result.unshift(this.#move);
     }
     return result;
   }
 
   activeMove() {
     if (this.activeBranch === -1) {
-      return this.move;
+      return this.#move;
     }
     else {
-      return this.children[this.activeBranch].activeMove();
+      return this.#children[this.activeBranch].activeMove();
     }
   }
 
   moveAt(address) {
-    if (address.length === 0) {
-      return this.move;
-    }
-    else if (address[0] >= this.children.length || address[0] < 0) {
-      return null;
+    let tree = this.#treeAt(address);
+    if (tree) {
+      return tree.#move;
     }
     else {
-      return this.children[address[0]].moveAt(address.slice(1));
+      return null;
     }
   }
 
-  getChildren() {
-    if (this.activeBranch === -1) {
-      return this.children;
+  getChildrenMoves() {
+    let tree = this.#treeActive();
+    let result = new Array(tree.#children.length);
+    for (let i=0; i < result.length; ++i) {
+      result[i] = tree.#children[i].#move;
     }
-    else {
-      return this.children[this.activeBranch].getChildren();
-    }
+    return result;
   }
 
-  getChildrenAt(address) {
-    if (address.length === 0) {
-      return this.children;
+  getChildrenMovesAt(address) {
+    let tree = this.#treeAt(address);
+    let result = new Array(tree.#children.length);
+    for (let i=0; i < result.length; ++i) {
+      result[i] = tree.#children[i].#move;
     }
-    else if (address[0] >= this.children.length || address[0] < 0) {
-      return null;
-    }
-    else {
-      return this.children[address[0]].getChildrenAt(address.slice(1));
-    }
+    return result;
   }
 
   activeHalfmove() {
-    if (this.activeBranch === -1) {
-      return this.halfmove;
-    }
-    else {
-      return this.children[this.activeBranch].activeHalfmove();
-    }
+    let tree = this.#treeActive();
+    return tree.halfmove;
   }
 
   halfmoveAt(address) {
-    if (address.length === 0) {
-      return this.halfmove;
-    }
-    else if (address[0] >= this.children.length || address[0] < 0) {
-      return null;
-    }
-    else {
-      return this.children[address[0]].halfmoveAt(address.slice(1));
-    }
+    let tree = this.#treeAt(address);
+    return tree.halfmove;
   }
 
   activateAddress(address) {
@@ -218,11 +212,11 @@ export class moveTree {
       this.activeBranch = -1;
       return true;
     }
-    else if (address[0] >= this.children.length || address[0] < 0) {
+    else if (address[0] >= this.#children.length || address[0] < 0) {
       return false;
     }
     else {
-      if (this.children[address[0]].activateAddress(address.slice(1))) {
+      if (this.#children[address[0]].activateAddress(address.slice(1))) {
         this.activeBranch = address[0];
         return true;
       }
@@ -232,36 +226,21 @@ export class moveTree {
   }
 
   addressExists(address) {
-    if (address.length===0) {
+    let tree = this.#treeAt(address);
+    if (tree) {
       return true;
     }
-    else if (address[0] >= this.children.length || address[0] < 0) {
-      return false;
-    }
-    else {
-      return this.children[address[0]].addressExists(address.slice(1));
-    }
+    return false;
   }
 
   numberOfBranches() {
-    if (this.activeBranch === -1) {
-      return this.children.length;
-    }
-    else {
-      return this.children[this.activeBranch].numberOfBranches();
-    }
+    let tree = this.#treeActive();
+    return tree.#children.length;
   }
 
   numberOfBranchesAt(address) {
-    if (address.length === 0) {
-      return this.children.length;
-    }
-    else if (address[0] >= this.children.length || address[0] < 0) {
-      return null;
-    }
-    else {
-      return this.children[address[0]].numberOfBranchesAt(address.slice(1));
-    }
+    let tree = this.#treeAt(address);
+    return tree.#children.length;
   }
 
   level() {
@@ -269,10 +248,10 @@ export class moveTree {
       return 0;
     }
     else if (this.activeBranch === 0) {
-      return this.children[this.activeBranch].level();
+      return this.#children[this.activeBranch].level();
     }
     else {
-      return 1 + this.children[this.activeBranch].level();
+      return 1 + this.#children[this.activeBranch].level();
     }
   }
 
@@ -280,14 +259,14 @@ export class moveTree {
     if (address.length === 0) {
       return 0;
     }
-    else if (address[0] >= this.children.length || address[0] < 0) {
+    else if (address[0] >= this.#children.length || address[0] < 0) {
       return null;
     }
     else if (address[0] === 0) {
-      return this.children[address[0]].levelAt(address.slice(1));
+      return this.#children[address[0]].levelAt(address.slice(1));
     }
     else {
-      let x = this.children[address[0]].levelAt(address.slice(1));
+      let x = this.#children[address[0]].levelAt(address.slice(1));
       if (x === null)
         return null
       else
@@ -296,271 +275,231 @@ export class moveTree {
   }
 
   copy() {
-    let copy = new moveTree(this.move, this.halfmove);
+    let copy = new moveTree(this.#move, this.halfmove);
     copy.activeBranch = this.activeBranch;
     copy.comment = [...this.comment];
     copy.annotation = [...this.annotation];
-    for (let i=0; i<this.children.length; ++i) {
-      copy.children.push(this.children[i].copy());
+    for (let i=0; i<this.#children.length; ++i) {
+      copy.#children.push(this.#children[i].copy());
     }
     return copy;
   }
 
   toString() {
     let result = "";
-    if (this.children.length>0) {
-      result += this.children[0].move.san + " ";
+    if (this.#children.length>0) {
+      result += this.#children[0].#move.san + " ";
     }
-    for (let i=1; i < this.children.length; i++) {
+    for (let i=1; i < this.#children.length; i++) {
       result += "(";
-      result += this.children[i].move.san + " " + this.children[i].toString();
+      result += this.#children[i].#move.san + " " + this.#children[i].toString();
       result += ") ";
     }
-    if (this.children.length>0) {
-      result += this.children[0].toString();
+    if (this.#children.length>0) {
+      result += this.#children[0].toString();
     }
     return result;
   }
 
   toPGN(forceMoveNumber=true) {
     let result = "";
-    if (this.move === null) { // this only happens at the root of the tree
+    if (this.#move === null) { // this only happens at the root of the tree
       // we print the comments before the start of the game
       for (let i=0; i<this.comment.length; ++i) {
         result += "{" + this.comment[i] + "} ";
       }
     }
     // write main line move
-    if (this.children.length>0) {
-      if (this.children[0].halfmove % 2 === 1) {
-        result += (this.children[0].halfmove+1)/2 + ". ";
+    if (this.#children.length>0) {
+      if (this.#children[0].halfmove % 2 === 1) {
+        result += (this.#children[0].halfmove+1)/2 + ". ";
       }
       else if (forceMoveNumber) {
-        result += this.children[0].halfmove/2 + "... ";
+        result += this.#children[0].halfmove/2 + "... ";
       }
-      result += this.children[0].move.san + " ";
-      for (let i=0; i<this.children[0].annotation.length; ++i) {
+      result += this.#children[0].#move.san + " ";
+      for (let i=0; i<this.#children[0].annotation.length; ++i) {
         // we skip the space after the move for suffix annotations
-        if (i === 0 && ["!", "?", "!!", "!?", "?!","??"].includes(this.children[0].annotation[i])) result = result.slice(0,-1);
-        result += this.children[0].annotation[i] + " ";
+        if (i === 0 && ["!", "?", "!!", "!?", "?!","??"].includes(this.#children[0].annotation[i])) result = result.slice(0,-1);
+        result += this.#children[0].annotation[i] + " ";
       }
-      for (let i=0; i<this.children[0].comment.length; ++i) {
-        result += "{" + this.children[0].comment[i] + "} ";
+      for (let i=0; i<this.#children[0].comment.length; ++i) {
+        result += "{" + this.#children[0].comment[i] + "} ";
       }
     }
     // write variations
-    for (let i=1; i < this.children.length; i++) {
+    for (let i=1; i < this.#children.length; i++) {
       result += "(";
-      if (this.children[i].halfmove % 2 === 1) {
-        result += (this.children[i].halfmove+1)/2 + ". ";
+      if (this.#children[i].halfmove % 2 === 1) {
+        result += (this.#children[i].halfmove+1)/2 + ". ";
       }
       else {
-        result += this.children[i].halfmove/2 + "... ";
+        result += this.#children[i].halfmove/2 + "... ";
       }
-      result += this.children[i].move.san + " ";
-      for (let j=0; j<this.children[i].annotation.length; ++j) {
+      result += this.#children[i].#move.san + " ";
+      for (let j=0; j<this.#children[i].annotation.length; ++j) {
         // we skip the space after the move for suffix annotations
-        if (j===0 && ["!", "?", "!!", "!?", "?!","??"].includes(this.children[0].annotation[i])) result = result.slice(0,-1);
-        result += this.children[i].annotation[j] + " ";
+        if (j===0 && ["!", "?", "!!", "!?", "?!","??"].includes(this.#children[0].annotation[i])) result = result.slice(0,-1);
+        result += this.#children[i].annotation[j] + " ";
       }
-      for (let j=0; j<this.children[i].comment.length; ++j) {
-        result += "{" + this.children[i].comment[j] + "} ";
+      for (let j=0; j<this.#children[i].comment.length; ++j) {
+        result += "{" + this.#children[i].comment[j] + "} ";
       }
       // force the move number if there was a comment before the next move
-      result += this.children[i].toPGN(this.children[i].comment.length > 0);
+      result += this.#children[i].toPGN(this.#children[i].comment.length > 0);
       result = result.slice(0,result.length-1);
       result += ") ";
     }
     // continue main line
-    if (this.children.length>0) {
+    if (this.#children.length>0) {
       // if a variation or comment are before the next move, we have to force the move number
-      result += this.children[0].toPGN(this.children.length>1 || this.children[0].comment.length>0);
+      result += this.#children[0].toPGN(this.#children.length>1 || this.#children[0].comment.length>0);
     }
     return result;
   }
 
   toPGNMain(withcomments=false,forceMoveNumber=true) {
     let result = "";
-    if (withcomments && this.move === null) { // this only happens at the root of the tree
+    if (withcomments && this.#move === null) { // this only happens at the root of the tree
       // we print the comments before the start of the game
       for (let i=0; i<this.comment.length; ++i) {
         result += "{" + this.comment[i] + "} ";
       }
     }
-    if (this.children.length>0) {
-      if (this.children[0].halfmove % 2 === 1) {
-        result += (this.children[0].halfmove+1)/2 + ". ";
+    if (this.#children.length>0) {
+      if (this.#children[0].halfmove % 2 === 1) {
+        result += (this.#children[0].halfmove+1)/2 + ". ";
       }
       else if (forceMoveNumber) {
-        result += this.children[0].halfmove/2 + "... ";
+        result += this.#children[0].halfmove/2 + "... ";
       }
-      result += this.children[0].move.san + " ";
+      result += this.#children[0].#move.san + " ";
       if (withcomments){
-        for (let i=0; i<this.children[0].annotation.length; ++i) {
+        for (let i=0; i<this.#children[0].annotation.length; ++i) {
           // we skip the space after the move for suffix annotations
-          if (i===0 && ["!", "?", "!!", "!?", "?!","??"].includes(this.children[0].annotation[i])) result = result.slice(0,-1);
-          result += this.children[0].annotation[i] + " ";
+          if (i===0 && ["!", "?", "!!", "!?", "?!","??"].includes(this.#children[0].annotation[i])) result = result.slice(0,-1);
+          result += this.#children[0].annotation[i] + " ";
         }
-        for (let i=0; i<this.children[0].comment.length; ++i) {
-          result += "{" + this.children[0].comment[i] + "} ";
+        for (let i=0; i<this.#children[0].comment.length; ++i) {
+          result += "{" + this.#children[0].comment[i] + "} ";
         }
       }
-      result += this.children[0].toPGNMain(withcomments,withcomments && this.children[0].comment.length>0);
+      result += this.#children[0].toPGNMain(withcomments,withcomments && this.#children[0].comment.length>0);
     }
     return result;
   }
 
   addComment(s) {
-    if (this.activeBranch === -1) {
-      this.comment.push(s);
-    }
-    else {
-      this.children[this.activeBranch].addComment(s);
-    }
+    let tree = this.#treeActive();
+    tree.comment.push();
   }
 
   deleteComment(index = null) {
-    if (this.activeBranch === -1) {
-      if (index === null) {
-        index = this.comment.length-1;
-      }
-      if (this.comment.length > index) {
-        this.comment.splice(index,1);
-        return true;
-      }
-      else 
-        return false;
+    let tree = this.#treeActive();
+    if (index === null) {
+      index = tree.comment.length-1;
     }
-    else {
-      return this.children[this.activeBranch].deleteComment(index);
+    if (tree.comment.length > index) {
+      tree.comment.splice(index,1);
+      return true;
     }
+    else 
+      return false;
   }
 
   deleteAllComments() {
-    if (this.activeBranch === -1) {
-      this.comment.length = 0;
-    }
-    else {
-      this.children[this.activeBranch].deleteAllComments();
-    }
+    let tree = this.#treeActive();
+    tree.comment.length = 0;
   }
 
+  editComment(s,index=0) {
+    let tree = this.#treeActive();
+    if (index >= 0 && index < tree.comment.length) {
+      tree.comment[index] = s;
+      return true;
+    }
+    else
+      return false;
+}
+
   getComment(index=0) {
-    if (this.activeBranch === -1) {
-      if (this.comment.length > index) {
-        return this.comment[index];
-      }
+    let tree = this.#treeActive();
+    if (tree.comment.length > index) {
+      return tree.comment[index];
     }
     else {
-      return this.children[this.activeBranch].getComment(index);
+      return null;
     }
   }
 
   getComments() {
-    if (this.activeBranch === -1) {
-        return this.comment.slice();
-    }
-    else {
-      return this.children[this.activeBranch].getComments();
-    }
+    let tree = this.#treeActive();
+    return tree.comment.slice();
   }
 
   addCommentAt(s,address) {
-    if (address.length === 0) {
-      this.comment.push(s);
+    let tree = this.#treeAt(address);
+    if (tree) {
+      tree.comment.push(s);
       return true;
     }
-    else if (address[0] >= this.children.length || address[0] < 0) {
-      return false;
-    }
     else {
-      return this.children[address[0]].addCommentAt(s,address.slice(1));
+      return false
     }
   }
 
   deleteCommentAt(address,index = null) {
-    if (address.length === 0) {
+    let tree = this.#treeAt(address);
+    if (tree) {
       if (index === null) {
-        index = this.comment.length-1;
+        index = tree.comment.length-1;
       }
-      if (index < this.comment.length) {
-        this.comment.splice(index,1);
+      if (index >= 0 && index < tree.comment.length) {
+        tree.comment.splice(index,1);
         return true;
       }
-      else {
-        return false;
-      }
     }
-    else if (address[0] >= this.children.length || address[0] < 0) {
-      return false;
-    }
-    else {
-      return this.children[address[0]].deleteCommentAt(address.slice(1),index);
-    }
+    return false;
   }
 
   deleteAllCommentsAt(address) {
-    if (address.length === 0) {
-      this.comment.length = 0;
+    let tree = this.#treeAt(address);
+    if (tree) {
+      tree.comment.length = 0;
       return true;
     }
-    else if (address[0] >= this.children.length || address[0] < 0) {
-      return false;
-    }
-    else {
-      return this.children[address[0]].deleteAllCommentsAt(address.slice(1));
-    }
+    return false;
   }
 
   getCommentAt(address,index=0) {
-    if (address.length === 0) {
-      if (index >= 0 && index < this.comment.length) {
-        return this.comment[index];
-      }
-      else
-        return null;
+    let tree = this.#treeAt(address);
+    if (tree && index >= 0 && index < tree.comment.length) {
+      return tree.comment[index];
     }
-    else if (address[0] >= this.children.length || address[0] < 0) {
-      return null;
-    }
-    else {
-      return this.children[address[0]].getCommentAt(address.slice(1),index);
-    }
+    return false;
   }
 
   editCommentAt(s,address,index=0) {
-    if (address.length === 0) {
-      if (index >= 0 && index < this.comment.length) {
-        this.comment[index] = s;
-        return true;
-      }
-      else
-        return false;
+    let tree = this.#treeAt(address);
+    if (tree && index >= 0 && index < tree.comment.length) {
+      tree.comment[index] = s;
+      return true;
     }
-    else if (address[0] >= this.children.length || address[0] < 0) {
-      return false;
-    }
-    else {
-      return this.children[address[0]].editCommentAt(s,address.slice(1),index);
-    }
+    return false;
   }
 
   getCommentsAt(address) {
-    if (address.length === 0) {
-        return this.comment.slice();
+    let tree = this.#treeAt(address);
+    if (tree) {
+      return tree.comment.slice();
     }
-    else if (address[0] >= this.children.length || address[0] < 0) {
-      return null;
-    }
-    else {
-      return this.children[address[0]].getCommentsAt(address.slice(1));
-    }
+    return false;
   }
 
   clearComments() {
     this.comment.length = 0;
-    for (let i=0; i<this.children.length; ++i) {
-      this.children[i].clearComments();
+    for (let i=0; i<this.#children.length; ++i) {
+      this.#children[i].clearComments();
     }
   }
 
@@ -575,173 +514,127 @@ export class moveTree {
   }
 
   addAnnotation(s) {
-    if (this.activeBranch === -1) {
-      let type = this.typeAnnotation(s);
-      if (type === null) return false;
-      else if (type === "san" && this.annotation.length > 0) {
-        if (this.typeAnnotation(this.annotation[0]) === "san") {
-          this.annotation[0] = s;
-        }
-        else {
-          this.annotation.unshift(s);
-        }
-        return true;
+    let tree = this.#treeActive();
+    let type = this.typeAnnotation(s);
+    if (type === null)
+      return false;
+    else if (type === "san" && tree.annotation.length > 0) {
+      if (this.typeAnnotation(tree.annotation[0]) === "san") {
+        tree.annotation[0] = s;
       }
       else {
-        this.annotation.push(s);
-        return true;
+        tree.annotation.unshift(s);
       }
+      return true;
     }
     else {
-      return this.children[this.activeBranch].addAnnotation(s);
+      tree.annotation.push(s);
+      return true;
     }
   }
 
   deleteAnnotation(index = null) {
-    if (this.activeBranch === -1) {
-      if (index === null) {
-        index = this.annotation.length-1;
-      }
-      if (this.annotation.length > index) {
-        this.annotation.splice(index,1);
-        return true
-      }
-      else 
-        return false;
+    let tree = this.#treeActive();
+    if (index === null) {
+      index = tree.annotation.length-1;
     }
-    else {
-      return this.children[this.activeBranch].deleteAnnotation(index);
+    if (tree.annotation.length > index) {
+      tree.annotation.splice(index,1);
+      return true
     }
+    else 
+      return false;
   }
 
   deleteAllAnnotations() {
-    if (this.activeBranch === -1) {
-      this.annotation.length = 0;
-    }
-    else {
-      this.children[this.activeBranch].deleteAllAnnotations();
-    }
+    let tree = this.#treeActive();
+    tree.annotation.length = 0;
   }
 
   getAnnotation(index=0) {
-    if (this.activeBranch === -1) {
-      if (this.annotation.length > index) {
-        return this.annotation[index];
-      }
+    let tree = this.#treeActive();
+    if (tree.annotation.length > index) {
+      return tree.annotation[index];
     }
-    else {
-      return this.children[this.activeBranch].getAnnotation(index);
-    }
+    return null;
   }
 
   getAnnotations() {
-    if (this.activeBranch === -1) {
-      return this.annotation.slice();
-    }
-    else {
-      return this.children[this.activeBranch].getAnnotations();
-    }
+    let tree = this.#treeActive();
+    return tree.annotation.slice();
   }
 
   addAnnotationAt(s,address) {
-    if (address.length === 0) {
-      let type = this.typeAnnotation(s);
-      if (type === null) return false;
-      else if (type === "san" && this.annotation.length > 0) {
-        if (this.typeAnnotation(this.annotation[0]) === "san") {
-          this.annotation[0] = s;
-        }
-        else {
-          this.annotation.unshift(s);
-        }
-        return true;
+    let tree = this.#treeAt(address);
+    let type = this.typeAnnotation(s);
+    if (!tree || type === null) return false;
+    else if (type === "san" && tree.annotation.length > 0) {
+      if (this.typeAnnotation(tree.annotation[0]) === "san") {
+        tree.annotation[0] = s;
       }
       else {
-        this.annotation.push(s);
-        return true;
+        tree.annotation.unshift(s);
       }
-    }
-    else if (address[0] >= this.children.length || address[0] < 0) {
-      return false;
+      return true;
     }
     else {
-      return this.children[address[0]].addAnnotationAt(s,address.slice(1));
+      tree.annotation.push(s);
+      return true;
     }
   }
 
   deleteAnnotationAt(address,index = null) {
-    if (address.length === 0) {
+    let tree = this.#treeAt(address);
+    if (tree) {
       if (index === null) {
-        index = this.annotation.length-1;
+        index = tree.annotation.length-1;
       }
-      if (index < this.annotation.length) {
-        this.annotation.splice(index,1);
+      if (index >= 0 && index < tree.annotation.length) {
+        tree.annotation.splice(index,1);
         return true;
       }
-      else {
-        return false;
-      }
     }
-    else if (address[0] >= this.children.length || address[0] < 0) {
-      return false;
-    }
-    else {
-      return this.children[address[0]].deleteAnnotationAt(address.slice(1),index);
-    }
+    return false;
   }
 
   deleteAllAnnotationsAt(address) {
-    if (address.length === 0) {
-      this.annotation.length = 0;
+    let tree = this.#treeAt(address);
+    if (tree) {
+      tree.annotation.length = 0;
       return true;
     }
-    else if (address[0] >= this.children.length || address[0] < 0) {
-      return false;
-    }
-    else {
-      return this.children[address[0]].deleteAllAnnotationsAt(address.slice(1));
-    }
+    return false;
   }
 
   getAnnotationAt(address,index=0) {
-    if (address.length === 0) {
-      if (index < this.annotation.length) {
-        return this.annotation[index];
+    let tree = this.#treeAt(address);
+    if (tree) {
+      if (index >= 0 && index < tree.annotation.length) {
+        return tree.annotation[index];
       }
-      else
-        return null;
     }
-    else if (address[0] >= this.children.length || address[0] < 0) {
-      return null;
-    }
-    else {
-      return this.children[address[0]].getAnnotationAt(address.slice(1),index);
-    }
+    return null;
   }
 
   getAnnotationsAt(address) {
-    if (address.length === 0) {
-        return this.annotation.slice();
+    let tree = this.#treeAt(address);
+    if (tree) {
+        return tree.annotation.slice();
     }
-    else if (address[0] >= this.children.length || address[0] < 0) {
-      return null;
-    }
-    else {
-      return this.children[address[0]].getAnnotationsAt(address.slice(1));
-    }
+    return null;
   }
 
   clearAnnotations() {
     this.annotation.length = 0;
-    for (let i=0; i<this.children.length; ++i) {
-      this.children[i].clearAnnotations();
+    for (let i=0; i<this.#children.length; ++i) {
+      this.#children[i].clearAnnotations();
     }
   }
 
   prune() {
-    if (this.children.length > 0) {
-      this.children = this.children.slice(0,1);
-      this.children[0].prune();
+    if (this.#children.length > 0) {
+      this.#children = this.#children.slice(0,1);
+      this.#children[0].prune();
     }
   }
 }

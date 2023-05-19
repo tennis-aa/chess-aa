@@ -463,12 +463,12 @@ export class chess_aa {
         break;
     }
 
-    let children = this.variations.getChildren();
+    let childrenMoves = this.variations.getChildrenMoves();
     let moveAlreadyMade = false;
     if (branch === null) {
-      for (let i=0; i<children.length; i++) {
-        let child = children[i];
-        if (this.moveEqual(move,child.move)){
+      for (let i=0; i<childrenMoves.length; i++) {
+        let childMove = childrenMoves[i];
+        if (this.moveEqual(move,childMove)){
           moveAlreadyMade = true;
           branch = i;
           break;
@@ -476,7 +476,7 @@ export class chess_aa {
       }
     }
     else {
-      if (this.moveEqual(move,children[branch].move)) {
+      if (this.moveEqual(move,childrenMoves[branch])) {
         moveAlreadyMade = true;
       }
       else {
@@ -739,6 +739,13 @@ export class chess_aa {
 
   getComments() {
     return this.variations.getComments();
+  }
+
+  editComment(s, index) {
+    if (this.variations.editComment(s, index)) {
+      let event = new CustomEvent("chess-aa-editedcomment",{detail:{comment: s, address: this.variations.address(), index: index}});
+      this.dispatcher.dispatchEvent(event);
+    }
   }
 
   editCommentAt(s, address, index) {

@@ -68,6 +68,7 @@ export class variationbox {
       span = document.createElement("span");
       span.style.cursor = "pointer";
       span.style.paddingRight = "5px";
+      span.style.display = "inline-block";
       span.setAttribute("data-address",JSON.stringify(address));
       let halfmove = this.chess_aa.variations.halfmoveAt(address);
       let branch = address[address.length-1];
@@ -250,16 +251,17 @@ export class variationbox {
     this.variationsDiv.replaceChildren();
     this.activeAddress = [];
     let that = this;
-    function recur(movetree,currentAddress) {
-      for (let i=0; i<movetree.children.length; ++i) {
+    function recur(currentAddress) {
+      let moves = that.chess_aa.variations.getChildrenMovesAt(currentAddress);
+      for (let i=0; i<moves.length; ++i) {
         currentAddress.push(i);
-        that.add(movetree.children[i].move,currentAddress);
-        recur(movetree.children[i],currentAddress);
+        that.add(moves[i],currentAddress);
+        recur(currentAddress);
         currentAddress.pop();
         that.undo();
       }
     }
-    recur(this.chess_aa.variations,[]);
+    recur([]);
     let address = this.chess_aa.variations.address();
     if (address.length > 0) {
       let span = this.variationsDiv.querySelector("[data-address='" + JSON.stringify(address) + "']");

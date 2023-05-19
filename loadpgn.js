@@ -114,7 +114,7 @@ export function loadpgn(str) {
           chess.undo();
           tree.undo();
         }
-        let move = tree.moveAtBranch(0);
+        let move = tree.getChildMove(0);
         chess.move(move);
         tree.redo(0);
         continue;

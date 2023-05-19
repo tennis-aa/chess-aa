@@ -657,7 +657,7 @@ export class chess_aa {
 
     // make moves after common node
     for (let i=commonNode+1; i<address.length; ++i) {
-      let move = this.variations.moveAtBranch(address[i]);
+      let move = this.variations.getChildMove(address[i]);
       this.makeMove(move,animate,false,address[i]);
     }
   }
@@ -1383,8 +1383,8 @@ export class chess_aa {
           return false;
         }
         else if (event.code === "ArrowRight") {
-          let move = that.variations.moveAtBranch(0);
-          that.makeMove(move,true);
+          let move = that.variations.getChildMove(0);
+          that.makeMove(move,true,false,0);
           return false;
         }
       }

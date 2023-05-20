@@ -60,6 +60,7 @@ export class chessengine {
 
   init() {
     this.setOption("MultiPV", 3);
+    this.timeLastMessage = new Array(3).fill(0);
     this.setOption("Use NNUE",true);
   }
 
@@ -235,8 +236,11 @@ export class chessengine {
     else if (line.startsWith("info")) {
       let info = line.split(/\s+/);
       if (info.includes("pv")) {
-        engineCurrentDepth = parseInt(info[info.indexOf("depth")+1]);
         multipv = parseInt(info[info.indexOf("multipv")+1]) - 1;
+        let currentTime = Date.now();
+        if (currentTime - this.timeLastMessage[multipv] < 10) return;// Do not process messages less than 10ms apart
+        engineCurrentDepth = parseInt(info[info.indexOf("depth")+1]);
+        console.log(engineCurrentDepth);
         engineCurrentScoretype = info[info.indexOf("score")+1];
         engineCurrentScore = parseInt(info[info.indexOf("score")+2]);
         engineCurrentVariation = [];
@@ -277,6 +281,7 @@ export class chessengine {
       }
     );
     this.dispatcher.dispatchEvent(event);
+    this.timeLastMessage[multipv] = Date.now();
   }
 
   play(line) {

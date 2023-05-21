@@ -350,6 +350,13 @@ export class chessengine {
     };
   }
 
+  getOption(name) {
+    if (this.options[name])
+      return this.options[name].value;
+    else
+      return null;
+  }
+
   setOption(name,value) {
     let option = this.options[name];
     if (option) {
@@ -367,7 +374,7 @@ export class chessengine {
         }
         else {
           console.log("engine option",name,"needs to be either true or false");
-          return;
+          return false;
         }
       }
       else if (option.type === "string") {
@@ -377,7 +384,7 @@ export class chessengine {
         }
         else {
           console.log("engine option",name,"needs to be a string");
-          return;
+          return false;
         }
       }
       else if (option.type === "spin") {
@@ -387,14 +394,16 @@ export class chessengine {
         }
         else {
           console.log("engine option",name,"needs to be an integer between",option.min,"and",option.max);
-          return;
+          return false;
         }
       }
       let event = new CustomEvent("chess-aa-engineSetoption",{detail:{name:name,value:value}});
       this.dispatcher.dispatchEvent(event);
+      return true;
     }
     else {
       console.log("engine option",name,"does not exist");
+      return false;
     }
   }
 

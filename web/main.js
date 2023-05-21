@@ -144,6 +144,13 @@ animationDuration.oninput = function (e) {
   animationDurationValue.textContent = animationDuration.value;
 };
 
+let numberOfLines = document.getElementById("engine-number-of-lines");
+numberOfLines.onchange = function (e) {
+  let x = parseInt(numberOfLines.value);
+  if (x >= 1 && x <= 5) myChessengine.setOption("MultiPV", x);
+  numberOfLines.value = myChessengine.getOption("MultiPV");
+};
+
 let themeDefault = document.getElementById("theme-default");
 themeDefault.onclick = function(e) {
   myChess.resetColors();

@@ -1,8 +1,15 @@
 import { Chess } from "./chess.js";
 
 export class chessengine {
-  constructor(chess_aa, engine_path) {
+  constructor(chess_aa, engine_url_api) {
     this.chess_aa = chess_aa;
+
+    // api for an engine running externally
+    this.engineAPI;
+    if (!engine_url_api || typeof engine_url_api === "string" || engine_url_api instanceof String || engine_url_api instanceof URL) 
+      this.engineAPI = null;
+    else
+      this.engineAPI = engine_url_api;
 
     // worker running the engine
     this.engine = null;
@@ -35,10 +42,10 @@ export class chessengine {
     this.searchingMove = false;
 
     // launch engine
-    this.launchEngine(engine_path);
-    if (engine_path === "desktop") {
-      window.engineAPI.engineOnSwitch(() => {let that = this; that.launchEngine("desktop")});
-      window.engineAPI.engineOnMessage(this.engineOnMessage());
+    this.launchEngine(engine_url_api);
+    if (this.engineAPI) {
+      this.engineAPI.engineOnSwitch(() => {let that = this; that.launchEngine()});
+      this.engineAPI.engineOnMessage(this.engineOnMessage());
     }
 
     // chess instance is required to validate moves and change notation
@@ -68,8 +75,8 @@ export class chessengine {
     this.ok = false;
     if (this.engineOn) this.switch(false);
     this.terminate();
-    if (engine_path === "desktop") { // launch on desktop
-      window.engineAPI.engineLaunch();
+    if (this.engineAPI) { // launch on desktop
+      this.engineAPI.engineLaunch();
     }
     else if (engine_path) {
       this.engine = new Worker(engine_path);
@@ -95,8 +102,8 @@ export class chessengine {
     if (this.engine) {
       this.engine.postMessage(cmd);
     }
-    else { // desktop
-      window.engineAPI.uciCmd(cmd);
+    else if (this.engineAPI) { // desktop
+      this.engineAPI.uciCmd(cmd);
     }
   }
 
@@ -105,8 +112,8 @@ export class chessengine {
     if (this.engine) {
       this.engine.terminate();
     }
-    else if (window.engineAPI) { // desktop
-      window.engineAPI.engineTerminate();
+    else if (this.engineAPI) { // desktop
+      this.engineAPI.engineTerminate();
     }
   }
 
@@ -240,7 +247,6 @@ export class chessengine {
         let currentTime = Date.now();
         if (currentTime - this.timeLastMessage[multipv] < 10) return;// Do not process messages less than 10ms apart
         engineCurrentDepth = parseInt(info[info.indexOf("depth")+1]);
-        console.log(engineCurrentDepth);
         engineCurrentScoretype = info[info.indexOf("score")+1];
         engineCurrentScore = parseInt(info[info.indexOf("score")+2]);
         engineCurrentVariation = [];
@@ -319,7 +325,7 @@ export class chessengine {
   }
 
   switch(on) {
-    if (this.mode === "analysis") {
+    if (this.mode === "analysis" && this.ok) {
       if (on) {
         this.engineOn = true;
         this.analyzePosition();

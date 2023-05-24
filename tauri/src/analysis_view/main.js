@@ -7,7 +7,7 @@ import { openingexplorer } from "./chess_aa/chess_aa_opening_explorer.js";
 
 let chess_aa_div = document.getElementById("chess-aa");
 let myChess = new chess_aa(chess_aa_div);
-let myChessengine = new chessengine(myChess, "desktop");
+let myChessengine = new chessengine(myChess, window.engineAPI);
 let enginebar_div = document.getElementById("chess-aa-enginebar");
 let myBar = new enginebar(enginebar_div, myChessengine);
 let variationbox_div = document.getElementById("chess-aa-variationbox");
@@ -46,12 +46,14 @@ window.undoMove = function() {
   myChess.unmakeMove();
 }
 
-let enginecheckbox = document.getElementById("engineCheckbox")
-enginecheckbox.onchange = function engineSwitch(e) {
-  myChessengine.switch(e.target.checked);
-  if (e.target.checked) window.select_engine_if_none();
+let enginecheckbox = document.getElementById("engineCheckbox");
+enginecheckbox.onchange = async function engineSwitch(e) {
+  enginecheckbox.checked = !enginecheckbox.checked;
+  if (enginecheckbox.checked) await window.select_engine_if_none();
+  myChessengine.switch(!enginecheckbox.checked);
+  return false;
 };
-myChessengine.dispatcher.addEventListener("chess-aa-engineSwitchOnOff", function(event) {enginecheckbox.checked = event.detail.on})
+myChessengine.dispatcher.addEventListener("chess-aa-engineSwitchOnOff", function(event) {enginecheckbox.checked = event.detail.on;});
 
 document.getElementById("openingExplorerCheckbox").onchange = function engineSwitch(e) {
   myOpeningExplorer.switch(e.target.checked);

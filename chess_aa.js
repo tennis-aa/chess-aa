@@ -719,9 +719,7 @@ export class chess_aa {
   }
 
   deleteComment(index) {
-    console.log("trying to delete comment")
     if (this.variations.deleteComment(index)) {
-      console.log("deleting comment")
       let event = new CustomEvent("chess-aa-deletedcomment",{detail:{address: this.variations.address(), index: index}});
       this.dispatcher.dispatchEvent(event);
     }

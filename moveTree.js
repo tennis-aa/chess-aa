@@ -243,7 +243,7 @@ export class moveTree {
 
   addComment(s) {
     let tree = this.#treeActive();
-    tree.#comment.push();
+    tree.#comment.push(s);
   }
 
   addCommentAt(s,address) {

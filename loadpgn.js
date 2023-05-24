@@ -23,6 +23,7 @@ export function loadpgn(str) {
   let value = "";
   let movenumberstr = "";
   let comment = "";
+  let commentEndingChar;
   let annotation = "";
   let movecount = [0];
   let movestr = "";
@@ -98,6 +99,11 @@ export function loadpgn(str) {
       }
       else if (char==="{") {
         readingComment = true;
+        commentEndingChar = "}";
+      }
+      else if (char===";") {
+        readingComment = true;
+        commentEndingChar = "\n";
       }
       else if (char==="(") {
         chess.undo();
@@ -241,7 +247,7 @@ export function loadpgn(str) {
       }
     }
     else if (readingComment) {
-      if (char==="}") {
+      if (char === commentEndingChar) {
         tree.addComment(comment);
         comment = "";
         betweenMoves = true;
@@ -267,8 +273,14 @@ export function loadpgn(str) {
         readingKey = true;
       else {
         // start reading moves (or comments)
-        if (char === "{")
+        if (char === "{") {
           readingComment = true;
+          commentEndingChar = "}";
+        }
+        else if (char === ";") {
+          readingComment = true;
+          commentEndingChar = "\n";
+        }
         else {
           readingMoveNumber = true;
           --i;
@@ -294,6 +306,10 @@ export function loadpgn(str) {
     else {
       throw ("improper pgn: invalid move " + movestr + " at " + chess.pgn());
     }
+  }
+
+  if (readingComment && commentEndingChar === "\n") {
+    tree.addComment(comment);
   }
 
   tree.activateAddress([]);

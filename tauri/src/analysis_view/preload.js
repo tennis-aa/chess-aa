@@ -9,6 +9,17 @@ window.engineAPI = {
   engineOnSwitch: (callback) => listen("engine-switch", (event) => callback())
 };
 
+window.testAPI = {
+  uciCmd: (data) => {},
+  engineLaunch: () => {},
+  engineTerminate: () => {},
+  engineOnMessage: (callback) => listen("engine-test-output", (event) => callback(null,event.payload)),
+  engineOnSwitch: (callback) => {}
+};
+
+window.test_engine = function(callback) {listen("test-engine",(event) => {console.log("call to test_engine");callback()});};
+window.test_engine_passed = function(options) {invoke("test_engine_passed",{options: options});};
+
 window.register_engine = async function(name) {return invoke("register_engine", {name: name});};
 window.register_engine_dialog = function(callback) {listen("register-engine-dialog", (event) => callback(event))};
 

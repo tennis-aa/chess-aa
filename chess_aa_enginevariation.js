@@ -79,6 +79,7 @@ export class enginevariation {
   clear() {
     let that = this;
     return function() {
+      that.depthSpan.textContent = 0;
       for (let i=0; i<that.variationdivs.length; ++i) {
         that.variationdivs[i].replaceChildren("Variation " + (i+1));
       }

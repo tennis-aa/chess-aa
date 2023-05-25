@@ -173,6 +173,8 @@ export class chessengine {
   validate(line) {
     if (line === "uciok") {
       this.ok = true;
+      let uciok = new CustomEvent("chess-aa-engine-uciok",{detail:{options: {...this.options}}});
+      this.dispatcher.dispatchEvent(uciok);
       this.init();
     }
     else if (line.startsWith("option")) {

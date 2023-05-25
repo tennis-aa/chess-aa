@@ -49,7 +49,7 @@ window.undoMove = function() {
 let enginecheckbox = document.getElementById("engineCheckbox");
 enginecheckbox.onchange = async function engineSwitch(e) {
   enginecheckbox.checked = !enginecheckbox.checked;
-  if (enginecheckbox.checked) await window.select_engine_if_none();
+  if (!enginecheckbox.checked) await window.select_engine_if_none();
   myChessengine.switch(!enginecheckbox.checked);
   return false;
 };
@@ -91,3 +91,16 @@ window.printMaterial = function() {
   div.textContent = myChess.material();
 }
 
+window.test_engine(function(event) {
+  console.log("testing engine")
+  let test_engine = new chessengine(myChess,window.testAPI);
+  test_engine.dispatcher.addEventListener("chess-aa-engine-uciok", function(event) {
+    let options = event.detail.options;
+    for (let key in options) {
+      if (options[key].value !== undefined) {
+        options[key].default = options[key].value;
+      }
+    }
+    window.test_engine_passed(options);
+  });
+});

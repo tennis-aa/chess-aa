@@ -81,7 +81,6 @@ let enginecheckbox = document.getElementById("engineCheckbox");
 enginecheckbox.onchange = function engineSwitch(e) {
   enginecheckbox.checked = !enginecheckbox.checked;
   myChessengine.switch(!enginecheckbox.checked);
-  console.log(enginecheckbox.checked)
   return false;
 };
 myChessengine.dispatcher.addEventListener("chess-aa-engineSwitchOnOff", function(event) {enginecheckbox.checked = event.detail.on;});
@@ -127,6 +126,7 @@ window.printMaterial = function() {
 }
 
 window.restartEngine = function() {
+  myChessengine.switch(false);
   myChessengine.launchEngine();
 }
 

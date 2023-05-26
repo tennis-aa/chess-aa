@@ -59,6 +59,10 @@ document.getElementById("openingExplorerCheckbox").onchange = function engineSwi
   myOpeningExplorer.switch(e.target.checked);
 };
 
+document.getElementById("tablebaseCheckbox").onchange = function engineSwitch(e) {
+  myTablebase.switch(e.target.checked);
+};
+
 window.load_pgn = function() {
   let pgn = document.getElementById("pgn").value;
   myChess.loadPGN(pgn);
@@ -91,8 +95,64 @@ window.printMaterial = function() {
   div.textContent = myChess.material();
 }
 
+window.restartEngine = function() {
+  myChessengine.switch(false);
+  myChessengine.launchEngine();
+}
+
+let availableMovesCheckbox = document.getElementById("available-moves");
+availableMovesCheckbox.onchange = function (e) {
+  myChess.switchAvailableMoves(e.target.checked);
+};
+
+let sound = document.getElementById("sound");
+sound.onchange = function (e) {
+  myChess.switchSound(e.target.checked);
+};
+
+let animationDuration = document.getElementById("animation-duration");
+let animationDurationValue = document.getElementById("animation-duration-value");
+animationDuration.oninput = function (e) {
+  myChess.switchAnimationDuration(animationDuration.value);
+  animationDurationValue.textContent = animationDuration.value;
+};
+
+let numberOfLines = document.getElementById("engine-number-of-lines");
+numberOfLines.onchange = function (e) {
+  let x = parseInt(numberOfLines.value);
+  if (x >= 1 && x <= 5) myChessengine.setOption("MultiPV", x);
+  numberOfLines.value = myChessengine.getOption("MultiPV");
+};
+
+let themeDefault = document.getElementById("theme-default");
+themeDefault.onclick = function(e) {
+  myChess.resetColors();
+};
+
+let themegray = document.getElementById("theme-gray");
+themegray.onclick = function(e) {
+  myChess.updateColors({
+    whiteSquareColor: "#DEE3E6",
+    blackSquareColor: "#8CA2AD",
+    lastMoveFromColor: "#FF8C42",
+    lastMoveToColor: "#FF8C42",
+    arrowColor: "green",
+    highlightedSquareColor1: "red",
+    highlightedSquareColor2: "blue",
+    highlightedSquareColor3: "yellow",
+    highlightedSquareColor4: "black",
+  });
+};
+
+let settings = document.getElementById("settings");
+window.openSettings = function() {
+  settings.showModal();
+}
+window.closeSettings = function() {
+  settings.close();
+}
+
 window.test_engine(function(event) {
-  console.log("testing engine")
   let test_engine = new chessengine(myChess,window.testAPI);
   test_engine.dispatcher.addEventListener("chess-aa-engine-uciok", function(event) {
     let options = event.detail.options;

@@ -90,6 +90,7 @@ export class enginevariation {
     let that = this;
     return function(event) {
       if (event.detail.name === "MultiPV") {
+        that.depthSpan.textContent = 0;
         for (let i=that.variationdivs.length-1; i>=0; --i) {
           that.variationdivs[i].remove();
         }

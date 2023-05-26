@@ -13,12 +13,19 @@
         <div id="chess-aa-variationbox"></div>
         <div id="chess-aa-enginevariation"></div>
       </div>
-      <div id="chess-aa-openingexplorer">
-        <label for="openingExplorerCheckbox">Turn opening explorer on/off</label>
-        <input type="checkbox" id="openingExplorerCheckbox">
+      <div>
+        <div id="chess-aa-openingexplorer">
+          <label for="openingExplorerCheckbox">Turn opening explorer on/off</label>
+          <input type="checkbox" id="openingExplorerCheckbox">
+        </div>
+        <div id="chess-aa-tablebase">
+          <label for="tablebaseCheckbox">Turn tablebases on/off</label>
+          <input type="checkbox" id="tablebaseCheckbox">
+        </div>
       </div>
     </div>
     <div id="test">
+      <button onclick="openSettings()">Settings</button>
       <button onclick="restart()">Restart</button>
       <button onclick="flipBoard()">Flip board</button>
       <button onclick="printVariations()">Variations</button>
@@ -38,7 +45,33 @@
       <button onclick="addComment()">Add comment</button>
       <button onclick="deleteComment()">Delete comment</button>
       <button onclick="clearComments()">Clear all comments</button>
+      <button onclick="restartEngine()">Restart engine</button>
     </div>
+
+    <dialog id="settings">
+      <div>
+        <label for="available-moves">Show valid moves?</label>
+        <input id="available-moves" type="checkbox" checked>
+      </div>
+      <div>
+        <label for="sound">Sound</label>
+        <input id="sound" type="checkbox">
+      </div>
+      <label for="animation-duration">Animation duration (<span id="animation-duration-value">100</span>ms)</label>
+      <div>
+        <input type="range" min="0" max="500" step="10" value="100" id="animation-duration">
+      </div>
+      <div>
+        <label for="engine-number-of-lines">Number of engine lines</label>
+        <input type="number" min="1" max="5" step="1" value="3" id="engine-number-of-lines" style="width:2em">
+      </div>
+      <div>
+        <span>Theme:</span>
+        <button id="theme-default">Default</button>
+        <button id="theme-gray">Gray</button>
+      </div>
+      <button onclick="closeSettings()">Close</button>
+    </dialog>
 
     <!-- dialog windows -->
     <dialog id="dialog-engine-registration">

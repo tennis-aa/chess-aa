@@ -17,7 +17,7 @@ window.testAPI = {
   engineOnSwitch: (callback) => {}
 };
 
-window.test_engine = function(callback) {listen("test-engine",(event) => {console.log("call to test_engine");callback()});};
+window.test_engine = function(callback) {listen("test-engine",(event) => callback());};
 window.test_engine_passed = function(options) {invoke("test_engine_passed",{options: options});};
 
 window.register_engine = async function(name) {return invoke("register_engine", {name: name});};

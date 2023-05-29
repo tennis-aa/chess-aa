@@ -24,7 +24,7 @@ fn main() {
         .manage(Mutex::new(EngineCandidate::new()))
         .invoke_handler(tauri::generate_handler![uci_cmd,terminate_engine,launch_engine,
             test_engine_passed,register_engine,
-            switch_engine,select_engine_if_none,delete_engine])
+            switch_engine,select_engine_if_none,delete_engine,engine_options,engine_option_update,engine_option_button])
         .setup(|app| {
             let window = WindowBuilder::new(
                 app,

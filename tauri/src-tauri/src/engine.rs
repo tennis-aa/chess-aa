@@ -239,3 +239,48 @@ pub fn delete_engine(id: usize, app: AppHandle) {
         }
     }
 }
+
+#[tauri::command]
+pub fn engine_options(mut id: Option<usize>, app: AppHandle, engine: tauri::State<Engine>) -> Value {
+    if let None = id {
+        id = *engine.index.lock().unwrap();
+    }
+    match id {
+        Some(id) => {
+            let json = get_engine_json(&app);
+            let options = json.as_array().unwrap()[id].as_object().unwrap()["options"].clone();
+            return options;
+        }
+        None => {
+            return Value::Object(serde_json::Map::new());
+        }
+    }
+}
+
+#[tauri::command]
+pub fn engine_option_update(id: usize, option_name: String, option_value: Value, app: AppHandle, engine: tauri::State<Engine>) {
+    let mut json = get_engine_json(&app);
+    let options = &mut json.as_array_mut().unwrap()[id].as_object_mut().unwrap()["options"];
+    options[&option_name]["value"] = option_value.clone();
+    write_engine_json(&app, &json).expect("error writing to engines.json");
+
+    let index = engine.index.lock().unwrap();
+    if let Some(index) = *index {
+        if id == index {
+            let mut update = serde_json::Map::new();
+            update.insert("name".to_string(), Value::String(option_name));
+            update.insert("value".to_string(), option_value);
+            app.emit_all("engine-option-update",update).expect("Error emitting event engine-option-update");
+        }
+    }
+}
+
+#[tauri::command]
+pub fn engine_option_button(id: usize, option_name: String, app: AppHandle, engine: tauri::State<Engine>) {
+    let index = engine.index.lock().unwrap();
+    if let Some(index) = *index {
+        if id == index {
+            app.emit_all("engine-option-button",option_name).expect("Error emitting event engine-option-update");
+        }
+    }
+}

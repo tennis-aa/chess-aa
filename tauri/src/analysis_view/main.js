@@ -157,10 +157,31 @@ window.test_engine(function(event) {
   test_engine.dispatcher.addEventListener("chess-aa-engine-uciok", function(event) {
     let options = event.detail.options;
     for (let key in options) {
-      if (options[key].value !== undefined) {
+      if (key === "MultiPV") {
+        options[key].default = 3;
+        options[key].value = 3;
+      }
+      else if (options[key].value !== undefined) {
         options[key].default = options[key].value;
       }
     }
     window.test_engine_passed(options);
   });
+});
+
+window.engine_option_update_listen(function(payload) {
+  myChessengine.setOption(payload.name,payload.value);
+});
+
+window.engine_option_button_listen(function(name) {
+  console.log(name)
+  myChessengine.setOption(name);
+});
+
+myChessengine.dispatcher.addEventListener("chess-aa-engine-uciok", async function(event) {
+  let options = await window.engine_options(null);
+  for (let key in options) {
+    if (options[key].value)
+      myChessengine.setOption(key,options[key].value);
+  }
 });

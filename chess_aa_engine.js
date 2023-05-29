@@ -181,9 +181,10 @@ export class chessengine {
       line = line.split(" ");
       let name;
       let type;
-      let value;
+      let value = "";
       let min;
       let max;
+      let combo_options = [];
       let reading = "name";
       for (let i=2; i<line.length;++i) {
         if (reading === "name") {
@@ -196,14 +197,23 @@ export class chessengine {
         }
         else if (reading === "type") {
           type = line[i];
+          if (!["button","check","spin","string","combo"].includes(type)) {
+            console.log("Engine: unknown option type",type);
+          }
           reading = "value";
         }
         else if (reading === "value") {
           if (line[i] === "default") continue;
-          if (type === "spin") value = parseInt(line[i]);
+          if (type === "spin") {
+            value = parseInt(line[i]);
+            reading = "min";
+          }
+          else if (type === "combo") {
+            value = line[i];
+            reading = "combo_options";
+          }
           else if (type === "check") value = line[i] === "true" ? true : false;
-          else value = line[i];
-          reading = "min"
+          else if (type === "string") value = line[i];
         }
         else if (reading === "min") {
           if (line[i] === "min") continue;
@@ -214,6 +224,10 @@ export class chessengine {
           if (line[i] === "max") continue;
           max = parseInt(line[i]);
         }
+        else if (reading === "combo_options") {
+          if (line[i] === "var") continue;
+          combo_options.push(line[i]);
+        }
       }
       this.options[name] = {type: type};
       if (type === "string" || type === "check") {
@@ -223,6 +237,10 @@ export class chessengine {
         this.options[name].value = value;
         this.options[name].min = min;
         this.options[name].max = max;
+      }
+      else if (type === "combo") {
+        this.options[name].value = value;
+        this.options[name].options = combo_options;
       }
     }
   }
@@ -402,6 +420,16 @@ export class chessengine {
         }
         else {
           console.log("engine option",name,"needs to be an integer between",option.min,"and",option.max);
+          return false;
+        }
+      }
+      else if (option.type === "combo") {
+        if (option["options"].includes(value)) {
+          option.value = value;
+          this.uciCmd("setoption name " + name + " value " + value);
+        }
+        else {
+          console.log("engine option",name,"needs to be one of ",option["options"]);
           return false;
         }
       }

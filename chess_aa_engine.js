@@ -41,11 +41,13 @@ export class chessengine {
     // state of the engine during play
     this.searchingMove = false;
 
-    // launch engine
-    this.launchEngine(engine_url_api);
     if (this.engineAPI) {
-      this.engineAPI.engineOnSwitch(() => {let that = this; that.launchEngine()});
       this.engineAPI.engineOnMessage(this.engineOnMessage());
+      // the engine is launched externally when the engine is ready
+    }
+    else {
+      // launch engine
+      this.launchEngine(engine_url_api);
     }
 
     // chess instance is required to validate moves and change notation
@@ -73,10 +75,9 @@ export class chessengine {
 
   launchEngine(engine_path) {
     this.ok = false;
-    if (this.engineOn) this.switch(false);
     this.terminate();
     if (this.engineAPI) { // launch on desktop
-      this.engineAPI.engineLaunch();
+      this.engineAPI.engineLaunch(engine_path);
     }
     else if (engine_path) {
       this.engine = new Worker(engine_path);
@@ -109,6 +110,8 @@ export class chessengine {
 
   terminate() {
     this.options = {};
+    this.switch(false);
+    this.ok = false;
     if (this.engine) {
       this.engine.terminate();
     }

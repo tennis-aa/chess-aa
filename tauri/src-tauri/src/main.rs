@@ -3,12 +3,19 @@
 
 use tauri::{
     CustomMenuItem, Menu, Submenu,
-    WindowBuilder
+    WindowBuilder,
+    Window,
+    Manager
 };
-use std::sync::Mutex;
 
 pub mod engine;
 use engine::*;
+
+#[tauri::command]
+fn onclose(win: Window) {
+    println!("Closing tauri app");
+    win.close().unwrap();
+}
 
 fn main() {
     println!("Starting tauri app");
@@ -21,10 +28,8 @@ fn main() {
         .add_submenu(Submenu::new("Engine",engine_menu));
     tauri::Builder::default()
         .manage(Engine::new())
-        .manage(Mutex::new(EngineCandidate::new()))
         .invoke_handler(tauri::generate_handler![uci_cmd,terminate_engine,launch_engine,
-            test_engine_passed,register_engine,
-            switch_engine,select_engine_if_none,delete_engine,engine_options,engine_option_update,engine_option_button])
+            onclose, get_engine_json, write_engine_json])
         .setup(|app| {
             let window = WindowBuilder::new(
                 app,
@@ -46,10 +51,10 @@ fn main() {
                         });
                     }
                     "select-engine" => {
-                        select_engine(&app_handle);
+                        app_handle.emit_all("select-engine-dialog","").unwrap();
                     }
                     "manage-engine" => {
-                        manage_engine(&app_handle);
+                        app_handle.emit_all("manage-engine-dialog","").unwrap();
                     }
                     _ => {}
                 }

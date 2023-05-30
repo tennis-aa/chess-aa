@@ -94,4 +94,4 @@ window.printMaterial = function() {
   div.textContent = myChess.material();
 }
 
-window.x = myChessengine;
+window.engineAPI.engineOnSwitch(() => myChessengine.launchEngine(""));

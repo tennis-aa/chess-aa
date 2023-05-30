@@ -5,6 +5,7 @@ import { variationbox } from "../../chess_aa_variationbox.js";
 let chess_aa_div = document.getElementById("chess-aa");
 let myChess = new chess_aa(chess_aa_div,"play");
 let myChessengine = new chessengine(myChess,window.engineAPI);
+myChessengine.launchEngine("");
 let variationbox_div = document.getElementById("chess-aa-variationbox");
 let myVariationBox = new variationbox(variationbox_div, myChess);
 
@@ -45,5 +46,3 @@ window.changeLevel = function() {
   let level = document.getElementById("level").value;
   myChessengine.setOption("Skill Level",level);
 }
-
-window.x = myChessengine;

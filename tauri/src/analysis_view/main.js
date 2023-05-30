@@ -8,6 +8,8 @@ import { openingexplorer } from "./chess_aa/chess_aa_opening_explorer.js";
 let chess_aa_div = document.getElementById("chess-aa");
 let myChess = new chess_aa(chess_aa_div);
 let myChessengine = new chessengine(myChess, window.engineAPI);
+window.engine = myChessengine; // make the engine available globally for other modules to modify
+window.engine_test = new chessengine(myChess, window.testAPI); // make the engine available globally for other modules to modify
 let enginebar_div = document.getElementById("chess-aa-enginebar");
 let myBar = new enginebar(enginebar_div, myChessengine);
 let variationbox_div = document.getElementById("chess-aa-variationbox");
@@ -49,8 +51,11 @@ window.undoMove = function() {
 let enginecheckbox = document.getElementById("engineCheckbox");
 enginecheckbox.onchange = async function engineSwitch(e) {
   enginecheckbox.checked = !enginecheckbox.checked;
-  if (!enginecheckbox.checked) await window.select_engine_if_none();
-  myChessengine.switch(!enginecheckbox.checked);
+  if (!enginecheckbox.checked && !myChessengine.ok) {
+    window.show_select_dialog();
+  }
+  else 
+    myChessengine.switch(!enginecheckbox.checked);
   return false;
 };
 myChessengine.dispatcher.addEventListener("chess-aa-engineSwitchOnOff", function(event) {enginecheckbox.checked = event.detail.on;});
@@ -151,37 +156,3 @@ window.openSettings = function() {
 window.closeSettings = function() {
   settings.close();
 }
-
-window.test_engine(function(event) {
-  let test_engine = new chessengine(myChess,window.testAPI);
-  test_engine.dispatcher.addEventListener("chess-aa-engine-uciok", function(event) {
-    let options = event.detail.options;
-    for (let key in options) {
-      if (key === "MultiPV") {
-        options[key].default = 3;
-        options[key].value = 3;
-      }
-      else if (options[key].value !== undefined) {
-        options[key].default = options[key].value;
-      }
-    }
-    window.test_engine_passed(options);
-  });
-});
-
-window.engine_option_update_listen(function(payload) {
-  myChessengine.setOption(payload.name,payload.value);
-});
-
-window.engine_option_button_listen(function(name) {
-  console.log(name)
-  myChessengine.setOption(name);
-});
-
-myChessengine.dispatcher.addEventListener("chess-aa-engine-uciok", async function(event) {
-  let options = await window.engine_options(null);
-  for (let key in options) {
-    if (options[key].value)
-      myChessengine.setOption(key,options[key].value);
-  }
-});

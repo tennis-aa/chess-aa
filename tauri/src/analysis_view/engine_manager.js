@@ -1,13 +1,52 @@
-// registration
-let dialog_register = document.getElementById("dialog-engine-registration");
-window.register_engine_dialog((event) => {
+let engine = window.engine; // get engine from main.js
+let engine_test = window.engine_test; // get engine from main.js
+let engine_records = await window.readEngineRecords();
+let engine_index = null;
+window.oncloseApp(() => {
+  window.writeEngineRecords(engine_records);
+});
+
+let engine_candidate = {name: "", path:"", options:{}};
+
+// testing
+window.test_engine(function(path) {
+  engine_candidate.path = path;
+});
+
+engine_test.dispatcher.addEventListener("chess-aa-engine-uciok", function(event) {
+  engine_test.terminate();
+  let options = event.detail.options;
+  for (let key in options) {
+    if (key === "MultiPV") {
+      options[key].default = 3;
+      options[key].value = 3;
+    }
+    else if (options[key].value !== undefined) {
+      options[key].default = options[key].value;
+    }
+  }
+  engine_candidate.options = options;
   dialog_register.showModal();
 });
 
+// registration
+let dialog_register = document.getElementById("dialog-engine-registration");
+window.register_engine_listen((event) => {
+  dialog_register.showModal();
+});
+
+let engine_registration_name = document.getElementById("engine-registration-name");
 window.send_for_registration = async function () {
-  let name = document.getElementById("engine-registration-name").value;
-  let registered = await register_engine(name);
-  if (registered) dialog_register.close();
+  let name = engine_registration_name.value;
+  for (let engine of engine_records) {
+    if (engine.name === name) {
+      alert("name already exists");
+      return;
+    }
+  }
+  engine_candidate.name = name;
+  engine_records.push(engine_candidate);
+  dialog_register.close();
 }
 
 window.cancel_registration = function() {
@@ -16,26 +55,38 @@ window.cancel_registration = function() {
 
 // selection
 let dialog_select = document.getElementById("dialog-engine-selection");
-window.select_engine_dialog((engines) => {
-  let select = document.getElementById("engine-select");
-  select.replaceChildren();
-  let option = select.appendChild(document.createElement("option"));
+let engine_select = document.getElementById("engine-select");
+window.show_select_dialog = function() {
+  engine_select.replaceChildren();
+  let option = engine_select.appendChild(document.createElement("option"));
   option.textContent = "-- select engine --";
   option.disabled = true;
   option.selected = true;
-  for (let i=0; i<engines.length; ++i) {
-    let option = select.appendChild(document.createElement("option"));
+  for (let i=0; i<engine_records.length; ++i) {
+    let option = engine_select.appendChild(document.createElement("option"));
     option.value = i;
-    option.textContent = engines[i].name;
+    option.textContent = engine_records[i].name;
   }
+  if (engine_index !== null) engine_select.value = engine_index;
   dialog_select.showModal();
-});
+}
+window.select_engine_listen(window.show_select_dialog);
 
 window.send_selection = function() {
-  let id = parseInt(document.getElementById("engine-select").value);
-  window.select_engine(id);
+  let id = parseInt(engine_select.value);
+  engine.launchEngine(engine_records[id].path);
+  engine_index = id;
   dialog_select.close();
 }
+
+engine.dispatcher.addEventListener("chess-aa-engine-uciok", function(event) {
+  let options = engine_records[engine_index].options;
+  for (let key in options) {
+    if (options[key].value)
+      engine.setOption(key,options[key].value);
+  }
+  engine.switch(true);
+});
 
 window.cancel_selection = function() {
   dialog_select.close();
@@ -53,20 +104,19 @@ window.manage_engine_dialog((event) => {
   option.disabled = true;
   option.selected = true;
   dialog_manage_select.appendChild(option);
-  let engines = event.payload;
-  for (let i=0; i<engines.length; ++i) {
+  for (let i=0; i<engine_records.length; ++i) {
     let option = document.createElement("option");
     option.value = i;
-    option.textContent = engines[i].name;
+    option.textContent = engine_records[i].name;
     dialog_manage_select.appendChild(option);
   }
   dialog_manage.showModal();
 });
 
-dialog_manage_select.onchange = async function(e) {
+dialog_manage_select.onchange = function(e) {
   dialog_manage_options.replaceChildren();
   let id = parseInt(dialog_manage_select.value);
-  let options = await window.engine_options(id);
+  let options = engine_records[id].options;
   let keys = Object.keys(options).sort();
   for (let key of keys) {
     let option = options[key];
@@ -80,7 +130,8 @@ dialog_manage_select.onchange = async function(e) {
       b.textContent = key;
       b.id = key;
       b.onclick = function (e) {
-        window.engine_option_button(id,key);
+        if (id === engine_index)
+          engine.setOption(key);
       }
     }
     else if (option.type === "check") {
@@ -121,10 +172,24 @@ dialog_manage_select.onchange = async function(e) {
         input.checked = option.value;
       }
       input.onchange = function (e) {
-        if (option.type === "spin" && (input.value > option.max || input.value < option.min)) {
-          input.value = option.value;
+        let value;
+        if (option.type === "spin") {
+          value = parseInt(input.value);
+          if (value > option.max || value < option.min) {
+            input.value = option.value;
+            return;
+          }
         }
-        window.engine_option_update(id,key,input.value);
+        else if (option.type === "check") {
+          value = input.checked;
+        }
+        else { // string or combo
+          value = input.value
+        }
+        engine_records[id].options[key].value = value;
+        if (id === engine_index) {
+          engine.setOption(key,value);
+        }
       }
     }
   }
@@ -132,7 +197,14 @@ dialog_manage_select.onchange = async function(e) {
 
 window.delete_manage = function() {
   let id = parseInt(dialog_manage_select.value);
-  window.delete_engine(id);
+  engine_records.splice(id,1);
+  if (engine_index == id) {
+    engine.terminate();
+    engine_index = null;
+  }
+  else if (engine_index > id) {
+    engine_index--
+  }
   dialog_manage.close();
 }
 

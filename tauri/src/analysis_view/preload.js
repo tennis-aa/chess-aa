@@ -1,12 +1,13 @@
-const { listen } = window.__TAURI__.event;
+const { listen, TauriEvent } = window.__TAURI__.event;
 const invoke = window.__TAURI__.invoke;
+const { appWindow } = window.__TAURI__.window
 
 window.engineAPI = {
   uciCmd: (data) => invoke("uci_cmd", {command: data}),
-  engineLaunch: () => {invoke("launch_engine")},
+  engineLaunch: (path) => {invoke("launch_engine",{path:path})},
   engineTerminate: () => {invoke("terminate_engine")},
   engineOnMessage: (callback) => listen("engine-output", (event) => callback(null,event.payload)),
-  engineOnSwitch: (callback) => listen("engine-switch", (event) => callback())
+  engineOnSwitch: (callback) => {}
 };
 
 window.testAPI = {
@@ -17,20 +18,19 @@ window.testAPI = {
   engineOnSwitch: (callback) => {}
 };
 
-window.test_engine = function(callback) {listen("test-engine",(event) => callback());};
-window.test_engine_passed = function(options) {invoke("test_engine_passed",{options: options});};
+window.readEngineRecords = function() {return invoke("get_engine_json",{})};
+window.writeEngineRecords = function(json) {invoke("write_engine_json",{json: json})};
 
-window.register_engine = async function(name) {return invoke("register_engine", {name: name});};
-window.register_engine_dialog = function(callback) {listen("register-engine-dialog", (event) => callback(event))};
+window.oncloseApp = function(callback) {
+  appWindow.listen(TauriEvent.WINDOW_CLOSE_REQUESTED,(event) => {
+    callback();
+    invoke("onclose",{});
+  });
+}
 
-window.select_engine_dialog = function(callback) {listen("select-engine-dialog", (event) => callback(event.payload))};
+window.register_engine_listen = function(callback) {listen("register-engine-dialog", (event) => callback(event))};
+window.select_engine_listen = function(callback) {listen("select-engine-dialog", (event) => callback())};
+
+window.test_engine = function(callback) {listen("test-engine",(event) => callback(event.payload));};
 window.select_engine = function(id) {invoke("switch_engine", {id: id});};
-window.select_engine_if_none = function() {invoke("select_engine_if_none");};
-
 window.manage_engine_dialog = function(callback) {listen("manage-engine-dialog", (event) => callback(event))};
-window.delete_engine = function(id) {invoke("delete_engine", {id: id});};
-window.engine_options = function(id) {return invoke("engine_options", {id: id});};
-window.engine_option_update = function (id,name,value) {invoke("engine_option_update",{id:id,optionName:name,optionValue:value});};
-window.engine_option_button = function (id,name) {invoke("engine_option_button",{id:id,optionName:name});};
-window.engine_option_update_listen = function(callback) {listen("engine-option-update", (event) => callback(event.payload))};
-window.engine_option_button_listen = function(callback) {listen("engine-option-button", (event) => callback(event.payload))};

@@ -1,4 +1,5 @@
 let engine = window.engine; // get engine from main.js
+engine.terminate() // in case it was running from a previous session
 let engine_test = window.engine_test; // get engine from main.js
 let engine_records = await window.readEngineRecords();
 let engine_index = null;
@@ -14,7 +15,6 @@ window.test_engine(function(path) {
 });
 
 engine_test.dispatcher.addEventListener("chess-aa-engine-uciok", function(event) {
-  engine_test.terminate();
   let options = event.detail.options;
   for (let key in options) {
     if (key === "MultiPV") {
@@ -96,7 +96,7 @@ window.cancel_selection = function() {
 let dialog_manage = document.getElementById("dialog-engine-manage");
 let dialog_manage_select = document.getElementById("engine-manage");
 let dialog_manage_options = document.getElementById("engine-manage-options");
-window.manage_engine_dialog((event) => {
+window.manage_engine_listen((event) => {
   dialog_manage_select.replaceChildren();
   dialog_manage_options.replaceChildren();
   let option = document.createElement("option");
@@ -130,8 +130,7 @@ dialog_manage_select.onchange = function(e) {
       b.textContent = key;
       b.id = key;
       b.onclick = function (e) {
-        if (id === engine_index)
-          engine.setOption(key);
+        if (id === engine_index) engine.setOption(key);
       }
     }
     else if (option.type === "check") {

@@ -7,7 +7,6 @@ window.engineAPI = {
   engineLaunch: (path) => {invoke("launch_engine",{path:path})},
   engineTerminate: () => {invoke("terminate_engine")},
   engineOnMessage: (callback) => listen("engine-output", (event) => callback(null,event.payload)),
-  engineOnSwitch: (callback) => {}
 };
 
 window.testAPI = {
@@ -15,7 +14,6 @@ window.testAPI = {
   engineLaunch: () => {},
   engineTerminate: () => {},
   engineOnMessage: (callback) => listen("engine-test-output", (event) => callback(null,event.payload)),
-  engineOnSwitch: (callback) => {}
 };
 
 window.readEngineRecords = function() {return invoke("get_engine_json",{})};
@@ -28,9 +26,9 @@ window.oncloseApp = function(callback) {
   });
 }
 
+window.test_engine = function(callback) {listen("test-engine",(event) => callback(event.payload));};
+
+// menu events
 window.register_engine_listen = function(callback) {listen("register-engine-dialog", (event) => callback(event))};
 window.select_engine_listen = function(callback) {listen("select-engine-dialog", (event) => callback())};
-
-window.test_engine = function(callback) {listen("test-engine",(event) => callback(event.payload));};
-window.select_engine = function(id) {invoke("switch_engine", {id: id});};
-window.manage_engine_dialog = function(callback) {listen("manage-engine-dialog", (event) => callback(event))};
+window.manage_engine_listen = function(callback) {listen("manage-engine-dialog", (event) => callback(event))};

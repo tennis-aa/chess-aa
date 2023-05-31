@@ -26,7 +26,8 @@ import { variationbox } from "../chess_aa_variationbox.js";
 
 let chess_aa_div = document.getElementById("chess-aa");
 let myChess = new chess_aa(chess_aa_div,"play");
-let myChessengine = new chessengine(myChess,"../stockfish.js");
+let myChessengine = new chessengine(myChess);
+myChessengine.launchEngine();
 let variationbox_div = document.getElementById("chess-aa-variationbox");
 let myVariationBox = new variationbox(variationbox_div, myChess);
 

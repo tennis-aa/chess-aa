@@ -13,7 +13,6 @@ use std::sync::Mutex;
 use std::fs;
 use tokio::time::timeout;
 
-
 pub struct Engine {
     child : Mutex<Option<CommandChild>>
 }
@@ -28,7 +27,7 @@ pub fn uci_cmd(command: String, engine: tauri::State<Engine>) {
     // println!("command: {}",command);
     let mut child = engine.child.lock().unwrap();
     if let Some(x) = child.as_mut() {
-        x.write((command + "\n").as_bytes()).unwrap();
+        x.write((command + "\n").as_bytes()).unwrap_or_else(|_|{println!("engine received command while shut down")});
     }
 }
 

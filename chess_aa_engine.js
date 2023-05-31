@@ -41,20 +41,16 @@ export class chessengine {
     // state of the engine during play
     this.searchingMove = false;
 
-    if (this.engineAPI) {
-      this.engineAPI.engineOnMessage(this.engineOnMessage());
-      // the engine is launched externally when the engine is ready
-    }
-    else {
-      // launch engine
-      this.launchEngine(engine_url_api);
-    }
-
     // chess instance is required to validate moves and change notation
     this.chess = new Chess(chess_aa.startFen);
 
     // Event dispatches
     this.dispatcher = document.createElement("div");
+
+    // Setup for event handling of external engine
+    if (this.engineAPI) {
+      this.engineAPI.engineOnMessage(this.engineOnMessage());
+    }
 
     // listen to events fired by the chess-aa instance
     chess_aa.dispatcher.addEventListener("chess-aa-movemade", this.moveMade());
@@ -74,18 +70,14 @@ export class chessengine {
   }
 
   launchEngine(engine_path) {
-    this.ok = false;
     this.terminate();
     if (this.engineAPI) { // launch on desktop
       this.engineAPI.engineLaunch(engine_path);
     }
-    else if (engine_path) {
-      this.engine = new Worker(engine_path);
-      this.engine.onmessage = this.engineOnMessage();
-      this.uciCmd("uci");
-    }
-    else { // default to stockfish
-      engine_path = new URL("stockfish.js", import.meta.url);
+    else {
+      if (!engine_path) { // default to stockfish
+        engine_path = new URL("stockfish.js", import.meta.url);
+      }
       this.engine = new Worker(engine_path);
       this.engine.onmessage = this.engineOnMessage();
       this.uciCmd("uci");

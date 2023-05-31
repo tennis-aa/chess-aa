@@ -100,11 +100,6 @@ window.printMaterial = function() {
   div.textContent = myChess.material();
 }
 
-window.restartEngine = function() {
-  myChessengine.switch(false);
-  myChessengine.launchEngine();
-}
-
 let availableMovesCheckbox = document.getElementById("available-moves");
 availableMovesCheckbox.onchange = function (e) {
   myChess.switchAvailableMoves(e.target.checked);

@@ -33,6 +33,7 @@ import { WHITE, BLACK } from "../chess.js";
 let chess_aa_div = document.getElementById("chess-aa");
 let myChess = new chess_aa(chess_aa_div);
 let myChessengine = new chessengine(myChess);
+myChessengine.launchEngine();
 let enginebar_div = document.getElementById("chess-aa-enginebar");
 let myBar = new enginebar(enginebar_div, myChessengine);
 let variationbox_div = document.getElementById("chess-aa-variationbox");
@@ -126,7 +127,6 @@ window.printMaterial = function() {
 }
 
 window.restartEngine = function() {
-  myChessengine.switch(false);
   myChessengine.launchEngine();
 }
 

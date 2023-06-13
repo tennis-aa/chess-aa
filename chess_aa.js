@@ -712,7 +712,7 @@ export class chess_aa {
   }
 
   deleteCommentAt(address,index) {
-    if (this.variations.deleteComment(address,index)) {
+    if (this.variations.deleteCommentAt(address,index)) {
       let event = new CustomEvent("chess-aa-deletedcomment",{detail:{address: address, index: index}});
       this.dispatcher.dispatchEvent(event);
     }

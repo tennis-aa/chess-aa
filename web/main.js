@@ -103,24 +103,6 @@ window.flipBoard = function() {
   myChess.flipBoard();
 }
 
-window.addComment = function() {
-  let s = document.getElementById("comment").value;
-  myChess.addComment(s);
-}
-
-window.deleteComment = function() {
-  myChess.deleteComment();
-}
-
-window.clearComments = function() {
-  myChess.clearComments();
-}
-
-window.printComment = function() {
-  let div = document.getElementById("testbox");
-  div.textContent = myChess.getComments().join(" ");
-}
-
 window.printMaterial = function() {
   let div = document.getElementById("testbox");
   div.textContent = myChess.material();

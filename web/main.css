@@ -7,19 +7,31 @@
 }
 
 #chess-aa {
+  box-sizing: border-box;
   height: 100%;
   aspect-ratio: 1/1;
+  padding: 5px
 }
 
 #chess-aa-enginebar {
-  width: 40px;
-  min-width: 40px;
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  width: 3em;
   height: 100%;
   font-size: 16px;
+  padding: 5px;
+  font-size: 12px;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+#variation-utilities {
+  box-sizing: border-box;
+  padding: 5px;
+  flex: 0 0 auto;
+  width: 400px;
 }
 
 #chess-aa-variationbox {
-  width: 400px;
   height: 50%;
   font-size: 14px;
   font-family: sans-serif;
@@ -27,15 +39,25 @@
 }
 
 #chess-aa-enginevariation {
-  width: 400px;
   height: 50%;
   font-size: 14px;
   font-family: sans-serif;
 }
 
+#lichess-utilities {
+  flex: 0 0 auto;
+  width: 300px;
+  padding: 5px
+}
+
 #chess-aa-openingexplorer {
   overflow: auto;
   height: 50%;
+  padding: 5px 0
+}
+
+#chess-aa-tablebase {
+  padding: 5px 0
 }
 
 #settings {

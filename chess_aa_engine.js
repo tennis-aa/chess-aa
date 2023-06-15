@@ -36,7 +36,8 @@ export class chessengine {
     this.engineOn = false;
     this.engineOnDuringPause = false;
     this.stopped = false;
-    this.timeLastMessage;
+    this.timeLastMessage = new Array(3).fill(0);
+    this.lastMessageNotAnalyzed = new Array(3).fill("");
     
     // state of the engine during play
     this.searchingMove = false;
@@ -61,12 +62,6 @@ export class chessengine {
     // Pause engine when window is out of focus
     window.addEventListener("blur", this.pauseEngine());
     window.addEventListener("focus", this.unpauseEngine());
-  }
-
-  init() {
-    this.setOption("MultiPV", 3);
-    this.timeLastMessage = new Array(3).fill(0);
-    this.setOption("Use NNUE",true);
   }
 
   launchEngine(engine_path) {
@@ -118,6 +113,8 @@ export class chessengine {
     this.uciCmd(command);
     if (this.engineOn) {
       this.stopped = false;
+      this.timeLastMessage.fill(0);
+      this.lastMessageNotAnalyzed.fill("");
       this.uciCmd("go depth " + this.engineMaxDepth);
     }
   }
@@ -170,7 +167,6 @@ export class chessengine {
       this.ok = true;
       let uciok = new CustomEvent("chess-aa-engine-uciok",{detail:{options: {...this.options}}});
       this.dispatcher.dispatchEvent(uciok);
-      this.init();
     }
     else if (line.startsWith("option")) {
       line = line.split(" ");
@@ -247,6 +243,7 @@ export class chessengine {
     let engineCurrentScore;
     let engineCurrentVariation;
     let multipv;
+    let currentTime;
     if (this.chess.game_over()) { // mate or draw
       this.stop();
       engineCurrentDepth = 0;
@@ -259,8 +256,14 @@ export class chessengine {
       let info = line.split(/\s+/);
       if (info.includes("pv")) {
         multipv = parseInt(info[info.indexOf("multipv")+1]) - 1;
-        let currentTime = Date.now();
-        if (currentTime - this.timeLastMessage[multipv] < 10) return;// Do not process messages less than 10ms apart
+        currentTime = parseInt(info[info.indexOf("time")+1]);
+        if (currentTime - this.timeLastMessage[multipv] < 10 ) {// Do not process messages less than 10ms apart
+          this.lastMessageNotAnalyzed[multipv] = line;
+          return;
+        }
+        else {
+          this.lastMessageNotAnalyzed[multipv] = "";
+        }
         engineCurrentDepth = parseInt(info[info.indexOf("depth")+1]);
         engineCurrentScoretype = info[info.indexOf("score")+1];
         engineCurrentScore = parseInt(info[info.indexOf("score")+2]);
@@ -286,23 +289,34 @@ export class chessengine {
         return;
       }
     }
+    else if (line.startsWith("bestmove")) {
+      for (let i=0; i<this.lastMessageNotAnalyzed.length; ++i) {
+        if (this.lastMessageNotAnalyzed[i] !== "") {
+          this.timeLastMessage[i] = -Infinity;
+          this.analyze(this.lastMessageNotAnalyzed[i]);
+        }
+      }
+      return;
+    }
     else {
       return;
     }
     let event = new CustomEvent("chess-aa-engineEvaluation", 
       { detail: 
-        { turn: this.chess.turn(),
+        { 
+          turn: this.chess.turn(),
           score: engineCurrentScore,
           scoreType: engineCurrentScoretype,
           depth: engineCurrentDepth,
           variation: engineCurrentVariation,
           multipv: multipv,
-          fen: this.chess.fen()
+          fen: this.chess.fen(),
+          time: currentTime
         }
       }
     );
     this.dispatcher.dispatchEvent(event);
-    this.timeLastMessage[multipv] = Date.now();
+    this.timeLastMessage[multipv] = currentTime;
   }
 
   play(line) {
@@ -436,6 +450,12 @@ export class chessengine {
       console.log("engine option",name,"does not exist");
       return false;
     }
+  }
+
+  setMaxDepth(depth) {
+    this.engineMaxDepth = depth;
+    let event = new CustomEvent("chess-aa-engine-maxdepth",{detail: {depth: depth}});
+    this.dispatcher.dispatchEvent(event);
   }
 
   searchMove(fen) {

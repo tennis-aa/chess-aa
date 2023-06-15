@@ -9,11 +9,11 @@
     <div id="container">
       <div id="chess-aa-enginebar"></div>
       <div id="chess-aa"></div>
-      <div id="variationUtilities">
+      <div id="variation-utilities">
         <div id="chess-aa-variationbox"></div>
         <div id="chess-aa-enginevariation"></div>
       </div>
-      <div>
+      <div id="lichess-utilities">
         <div id="chess-aa-openingexplorer">
           <label for="openingExplorerCheckbox">Turn opening explorer on/off</label>
           <input type="checkbox" id="openingExplorerCheckbox">
@@ -32,7 +32,6 @@
       <button onclick="printPGNMain()">PGN</button>
       <button onclick="printFEN()">FEN</button>
       <button onclick="printMaterial()">Material</button>
-      <!-- <button onclick="printComment()">Print comment</button> -->
       <label for="engineCheckbox">Turn engine on/off</label>
       <input type="checkbox" id="engineCheckbox">
       <div id="testbox"></div>
@@ -41,10 +40,6 @@
       <button onclick="load_pgn()">Load PGN</button>
       <textarea id="fen" placeholder="Type fen"></textarea>
       <button onclick="load_fen()">Load fen</button>
-      <textarea id="comment" placeholder="Type comment"></textarea>
-      <button onclick="addComment()">Add comment</button>
-      <button onclick="deleteComment()">Delete comment</button>
-      <button onclick="clearComments()">Clear all comments</button>
     </div>
 
     <dialog id="settings">
@@ -63,6 +58,10 @@
       <div>
         <label for="engine-number-of-lines">Number of engine lines</label>
         <input type="number" min="1" max="5" step="1" value="3" id="engine-number-of-lines" style="width:2em">
+      </div>
+      <div>
+        <label for="engine-maxdepth">Max. depth of engine</label>
+        <input type="number" min="1" max="50" step="1" value="30" id="engine-maxdepth" style="width:3em">
       </div>
       <div>
         <span>Theme:</span>

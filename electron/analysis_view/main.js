@@ -10,6 +10,9 @@ import { WHITE, BLACK } from "../../chess.js";
 let chess_aa_div = document.getElementById("chess-aa");
 let myChess = new chess_aa(chess_aa_div);
 let myChessengine = new chessengine(myChess,window.engineAPI);
+myChessengine.dispatcher.addEventListener("chess-aa-engine-uciok", (event) => {
+  myChessengine.setOption("MultiPV", 3);
+});
 let enginebar_div = document.getElementById("chess-aa-enginebar");
 let myBar = new enginebar(enginebar_div, myChessengine);
 let variationbox_div = document.getElementById("chess-aa-variationbox");

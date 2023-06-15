@@ -34,6 +34,10 @@ let chess_aa_div = document.getElementById("chess-aa");
 let myChess = new chess_aa(chess_aa_div);
 let myChessengine = new chessengine(myChess);
 myChessengine.launchEngine();
+myChessengine.dispatcher.addEventListener("chess-aa-engine-uciok", (event) => {
+  myChessengine.setOption("MultiPV", 3);
+  myChessengine.setOption("Use NNUE",true);
+});
 let enginebar_div = document.getElementById("chess-aa-enginebar");
 let myBar = new enginebar(enginebar_div, myChessengine);
 let variationbox_div = document.getElementById("chess-aa-variationbox");
@@ -134,6 +138,15 @@ numberOfLines.onchange = function (e) {
   let x = parseInt(numberOfLines.value);
   if (x >= 1 && x <= 5) myChessengine.setOption("MultiPV", x);
   numberOfLines.value = myChessengine.getOption("MultiPV");
+};
+
+let maxdepth = document.getElementById("engine-maxdepth");
+maxdepth.onchange = function (e) {
+  let x = parseInt(maxdepth.value);
+  if (x >= 1 && x <= 50) {
+    myChessengine.setMaxDepth(x);
+  }
+  maxdepth.value = myChessengine.engineMaxDepth;
 };
 
 let themeDefault = document.getElementById("theme-default");

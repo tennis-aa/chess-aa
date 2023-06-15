@@ -66,10 +66,40 @@ pub fn launch_engine(app_handle: AppHandle, path: String) {
     let app_handle2 = app_handle.clone();
     tauri::async_runtime::spawn(async move {
         // read events such as stdout
+        let mut time_last_message = vec![0; 10];
+        let mut last_unsent_message = vec!["".to_string(); 10];
         while let Some(event) = rx.recv().await {
             match event {
                 CommandEvent::Stdout(line) => {
                     // println!("{}",line);
+                    // send info message for analysis only when time between evaluations exceeds 10ms - this prevents firing too many events that may block the ui
+                    let items: Vec<&str> = line.split_whitespace().collect();
+                    let multipv_pos = items.iter().position(|s| s == &"multipv");
+                    if let Some(multipv_pos) = multipv_pos {
+                        let multipv = items[multipv_pos+1];
+                        let mut multipv: usize = multipv.parse().unwrap();
+                        multipv -= 1;
+                        let time = items[items.iter().position(|s| s == &"time").unwrap()+1];
+                        let time: i32 = time.parse().unwrap();
+                        let diff = time - time_last_message[multipv];
+                        if diff > 0 && diff < 10 { 
+                            last_unsent_message[multipv] = line;
+                            continue;
+                        }
+                        else {
+                            last_unsent_message[multipv] = "".to_string();
+                        }
+                        time_last_message[multipv] = time;
+                    }
+                    else if items.len() > 0 && items[0] == "bestmove" {
+                        // force send the last command before bestmove
+                        for l in last_unsent_message.iter_mut() {
+                            if l != "" {
+                                app_handle2.emit_all("engine-output", l.trim()).unwrap();
+                                *l = "".to_string();
+                            }
+                        }
+                    }
                     app_handle2.emit_all("engine-output", line.trim()).unwrap();
                 }
                 CommandEvent::Stderr(line) => {println!("{}",line);}

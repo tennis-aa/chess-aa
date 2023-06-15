@@ -54,7 +54,7 @@ export class enginebar {
       if (event.detail.multipv > 0){
         return;
       }
-      if (event.detail.depth < 10 && event.detail.depth > 0) {
+      if (event.detail.time < 20 && event.detail.scoreType !== "mate") {
         return;
       }
       let whiteShare;

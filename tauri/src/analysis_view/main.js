@@ -124,6 +124,15 @@ numberOfLines.onchange = function (e) {
   numberOfLines.value = myChessengine.getOption("MultiPV");
 };
 
+let maxdepth = document.getElementById("engine-maxdepth");
+maxdepth.onchange = function (e) {
+  let x = parseInt(maxdepth.value);
+  if (x >= 1 && x <= 50) {
+    myChessengine.setMaxDepth(x);
+  }
+  maxdepth.value = myChessengine.engineMaxDepth;
+};
+
 let themeDefault = document.getElementById("theme-default");
 themeDefault.onclick = function(e) {
   myChess.resetColors();

@@ -60,6 +60,7 @@ export class chessengine {
     chess_aa.dispatcher.addEventListener("chess-aa-enginemoverequest", this.searchMoveHandler());
 
     // Pause engine when window is out of focus
+    this.pauseOnBlur = true;
     window.addEventListener("blur", this.pauseEngine());
     window.addEventListener("focus", this.unpauseEngine());
   }
@@ -255,7 +256,7 @@ export class chessengine {
     else if (line.startsWith("info")) {
       let info = line.split(/\s+/);
       if (info.includes("pv")) {
-        multipv = parseInt(info[info.indexOf("multipv")+1]) - 1;
+        multipv = (parseInt(info[info.indexOf("multipv")+1]) - 1) || 0;
         currentTime = parseInt(info[info.indexOf("time")+1]);
         if (currentTime - this.timeLastMessage[multipv] < 10 ) {// Do not process messages less than 10ms apart
           this.lastMessageNotAnalyzed[multipv] = line;
@@ -373,16 +374,27 @@ export class chessengine {
   pauseEngine() {
     let that = this;
     return function() {
-      that.engineOnDuringPause = that.engineOn;
-      that.switch(false);
+      if (that.pauseOnBlur) {
+        that.engineOnDuringPause = that.engineOn;
+        that.switch(false);
+      }
     };
   }
 
   unpauseEngine() {
     let that = this;
     return function() {
-      that.switch(that.engineOnDuringPause);
+      if (that.pauseOnBlur)
+        that.switch(that.engineOnDuringPause);
     };
+  }
+
+  setPauseOnBlur(b) {
+    if (b === true)
+      this.pauseOnBlur = true;
+    else if (b === false) {
+      this.pauseOnBlur = false;
+    }
   }
 
   getOption(name) {

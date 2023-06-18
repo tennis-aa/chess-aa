@@ -74,11 +74,14 @@ pub fn launch_engine(app_handle: AppHandle, path: String) {
                     // println!("{}",line);
                     // send info message for analysis only when time between evaluations exceeds 10ms - this prevents firing too many events that may block the ui
                     let items: Vec<&str> = line.split_whitespace().collect();
-                    let multipv_pos = items.iter().position(|s| s == &"multipv");
-                    if let Some(multipv_pos) = multipv_pos {
-                        let multipv = items[multipv_pos+1];
-                        let mut multipv: usize = multipv.parse().unwrap();
-                        multipv -= 1;
+                    let pv_pos = items.iter().position(|s| s == &"pv");
+                    if let Some(_) = pv_pos {
+                        let multipv_pos = items.iter().position(|s| s == &"multipv");
+                        let multipv: usize;
+                        match multipv_pos {
+                            None => multipv = 0,
+                            Some(x) => multipv = items[x+1].parse::<usize>().unwrap() - 1
+                        }
                         let time = items[items.iter().position(|s| s == &"time").unwrap()+1];
                         let time: i32 = time.parse().unwrap();
                         let diff = time - time_last_message[multipv];

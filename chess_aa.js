@@ -1385,6 +1385,31 @@ export class chess_aa {
           that.makeMove(move,true,false,0);
           return false;
         }
+        else if (event.code === "ArrowDown") {
+          let address = that.variations.address();
+          let currentBranch = address.pop();
+          if (currentBranch !== undefined && currentBranch + 1 < that.variations.numberOfBranchesAt(address)) {
+            address.push(currentBranch+1);
+            that.gotoAddress(address);
+          }
+          event.preventDefault();
+        }
+        else if (event.code === "ArrowUp") {
+          let address = that.variations.address();
+          for (let i=address.length-1; i>=0; --i) {
+            if (address[i] === 0) address.pop();
+            else {
+              address[i] = address[i] - 1;
+              break;
+            } 
+          }
+          that.gotoAddress(address);
+          event.preventDefault();
+        }
+        else if (event.code === "Delete" || event.code === "Backspace") {
+          let address = that.variations.address();
+          that.removeVariationAtAddress(address);
+        }
       }
     };
   }

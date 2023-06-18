@@ -79,12 +79,14 @@ window.send_selection = function() {
   dialog_select.close();
 }
 
+let numberOfLines = document.getElementById("engine-number-of-lines");
 engine.dispatcher.addEventListener("chess-aa-engine-uciok", function(event) {
   let options = engine_records[engine_index].options;
   for (let key in options) {
     if (options[key].value)
       engine.setOption(key,options[key].value);
   }
+  engine.setOption("MultiPV", parseInt(numberOfLines.value));
   engine.switch(true);
 });
 

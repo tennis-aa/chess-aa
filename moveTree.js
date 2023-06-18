@@ -82,7 +82,7 @@ export class moveTree {
       }
       return true;
     }
-    else if (address[0] >= this.#children.length || address[0] < 0) {
+    else if (address.length === 0 || address[0] >= this.#children.length || address[0] < 0) {
       return false;
     }
     else {

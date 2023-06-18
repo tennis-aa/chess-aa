@@ -149,6 +149,11 @@ maxdepth.onchange = function (e) {
   maxdepth.value = myChessengine.engineMaxDepth;
 };
 
+let pausecheckbox = document.getElementById("engine-pause");
+pausecheckbox.onchange = function engineSwitch(e) {
+  myChessengine.setPauseOnBlur(pausecheckbox.checked);
+};
+
 let themeDefault = document.getElementById("theme-default");
 themeDefault.onclick = function(e) {
   myChess.resetColors();

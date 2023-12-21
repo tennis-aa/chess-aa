@@ -983,7 +983,7 @@ export class chess_aa {
     svg.style.left = "0";
     svg.style.pointerEvents = "none";
     svg.setAttribute("height", "100%");
-    svg.setAttribute("apect-ratio", "1/1");
+    svg.setAttribute("aspect-ratio", "1/1");
     svg.setAttribute("viewBox", "0 0 8 8");
 
     for (let i=0; i<8; ++i) {
@@ -1017,7 +1017,7 @@ export class chess_aa {
     svg.style.zIndex = "2";
     svg.style.pointerEvents = "none";
     svg.setAttribute("height", "100%");
-    svg.setAttribute("apect-ratio", "1/1");
+    svg.setAttribute("aspect-ratio", "1/1");
     svg.setAttribute("viewBox", "0 0 8 8");
 
     let defs = document.createElementNS(svgns,"defs");

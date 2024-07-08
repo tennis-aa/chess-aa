@@ -252,8 +252,10 @@ export class chess_aa {
     if (!fen) {
       fen = this.DEFAULTFEN
     }
-    if (!this.chess.load(fen)){
-      console.log("bad fen string");
+    try {
+      this.chess.load(fen);
+    } catch (e) {
+      console.log("bad fen string: " + e);
       return false;
     }
     this.clearAnnotations();
@@ -268,7 +270,8 @@ export class chess_aa {
       this.newPiece(this.chess.get(this.squareNames[i]), i)
     }
 
-    this.variations.clear();
+    let lastHalfmove = (this.chess.moveNumber() - 1) * 2 + (this.chess.turn() === BLACK);
+    this.variations = new moveTree(null, lastHalfmove);
     if (!quiet) { // skip the following block when loading a pgn
       if (this.startFen === this.DEFAULTFEN)
         this.header = {};
@@ -797,7 +800,7 @@ export class chess_aa {
       let img = event.currentTarget;
       if (event.button === 0 || event.targetTouches) {
         that.clearAnnotations();
-        if (that.chess.game_over() || (that.mode === "play" && that.player != that.chess.turn())) {
+        if (that.chess.isGameOver() || (that.mode === "play" && that.player != that.chess.turn())) {
           return;
         }
         let source = img.dataset.square;
@@ -1272,7 +1275,7 @@ export class chess_aa {
       this.cellAnnotations(this.squareNamesMap[move.to],"lastMoveTo");
     }
 
-    if (this.chess.in_check()) {
+    if (this.chess.inCheck()) {
       for (let i=0; i<64; i++) {
         let piece = this.chess.get(this.squareNames[i]);
         let color = this.chess.turn();

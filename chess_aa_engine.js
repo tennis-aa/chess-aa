@@ -72,7 +72,7 @@ export class chessengine {
     }
     else {
       if (!engine_path) { // default to stockfish
-        engine_path = new URL("stockfish.js", import.meta.url);
+        engine_path = new URL("stockfish-nnue-16.js", import.meta.url);
       }
       this.engine = new Worker(engine_path);
       this.engine.onmessage = this.engineOnMessage();
@@ -245,10 +245,10 @@ export class chessengine {
     let engineCurrentVariation;
     let multipv;
     let currentTime;
-    if (this.chess.game_over()) { // mate or draw
+    if (this.chess.isGameOver()) { // mate or draw
       this.stop();
       engineCurrentDepth = 0;
-      engineCurrentScoretype = this.chess.in_checkmate() ? "mate" : "draw";
+      engineCurrentScoretype = this.chess.isCheckmate() ? "mate" : "draw";
       engineCurrentScore = 0;
       engineCurrentVariation = [];
       multipv = 0;
@@ -272,8 +272,10 @@ export class chessengine {
         let moves = info.slice(info.indexOf("pv")+1);
         let movesmade = 0;
         for (let i=0; i<moves.length; ++i) {
-          let move = this.chess.move({ from: moves[i].slice(0,2), to: moves[i].slice(2,4), promotion: moves[i].length === 5 ? moves[i].slice(4) : "" });
-          if (!move) {
+          let move;
+          try {
+            move = this.chess.move({ from: moves[i].slice(0,2), to: moves[i].slice(2,4), promotion: moves[i].length === 5 ? moves[i].slice(4) : "" });
+          } catch (e) {
             break;
           }
           ++movesmade;
@@ -323,10 +325,13 @@ export class chessengine {
   play(line) {
     if (line.startsWith("bestmove")) {
       let moveString = line.split(" ")[1];
-      let move = this.chess.move({ from: moveString.slice(0,2), to: moveString.slice(2,4), promotion: moveString.length === 5 ? moveString.slice(4) : "" });
-      if (move) {
+      try{
+        let move = this.chess.move({ from: moveString.slice(0,2), to: moveString.slice(2,4), promotion: moveString.length === 5 ? moveString.slice(4) : "" });
         this.chess.undo();
         this.chess_aa.suggestMove(move);
+      }
+      catch (e) {
+        console.log("Engine played invalid move", moveString);
       }
     }
   }

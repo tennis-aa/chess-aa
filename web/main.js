@@ -37,7 +37,7 @@ window.restart = function () {
 }
 
 window.load_fen = function () {
-  let fen = document.getElementById("fen").value;
+  let fen = document.getElementById("fen").value.trim();
   myChess.loadFEN(fen);
 }
 

@@ -1,4 +1,4 @@
-import { Chess, WHITE } from "./chess.js";
+import { Chess, BLACK } from "./chess.js";
 import { moveTree } from "./moveTree.js";
 
 export function loadpgn(str) {
@@ -215,12 +215,8 @@ export function loadpgn(str) {
       else {
         if (initialMoveNumber === -1) {
           initialMoveNumber = parseInt(movenumberstr);
-          if (chess.turn() === WHITE) {
-            tree.halfmove = initialMoveNumber * 2 - 2;
-          }
-          else {
-            tree.halfmove = initialMoveNumber * 2 - 1;
-          }
+          let lastHalfmove = (initialMoveNumber - 1) * 2 + (chess.turn() === BLACK);
+          tree = new moveTree(null, lastHalfmove);
         }
         movenumberstr = "";
         readingMove = true;
@@ -288,8 +284,7 @@ export function loadpgn(str) {
         if (header["SetUp"] === "1") {
           if (!header["FEN"])
             throw "improper pgn: if SetUp key is 1, then a FEN key is required";
-          if (!chess.load(header["FEN"]))
-            throw ("improper pgn: fen string " + header["FEN"] + " is not valid.");
+          chess.load(header["FEN"]);
         }
       }
     }

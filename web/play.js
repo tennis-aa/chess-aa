@@ -1,25 +1,3 @@
-// The initial block is needed to enable SharedArrayBuffer (necessary for stockfish)
-// through a service worker. SharedArrayBuffer is enabled from the server, this block should be removed.
-// see https://stefnotch.github.io/web/COOP%20and%20COEP%20Service%20Worker/
-if ("serviceWorker" in navigator) {
-  // Register service worker
-  navigator.serviceWorker.register(new URL("./sw.js", import.meta.url)).then(
-    function (registration) {
-      console.log("COOP/COEP Service Worker registered", registration.scope);
-      // If the registration is active, but it's not controlling the page
-      if (registration.active && !navigator.serviceWorker.controller) {
-          window.location.reload();
-      }
-    },
-    function (err) {
-      console.log("COOP/COEP Service Worker failed to register", err);
-    }
-  );
-} else {
-  console.warn("Cannot register a service worker");
-}
-//////////////////////////////////////////////////////////////////////////
-
 import { chess_aa } from "../chess_aa.js";
 import { chessengine } from "../chess_aa_engine.js";
 import { variationbox } from "../chess_aa_variationbox.js";
